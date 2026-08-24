@@ -1,0 +1,49 @@
+{
+  "experiment_id": "V5_PITCH_SELECTOR_CONTEXT_TILT_V1",
+  "created_before_selector_selection_or_2022_materialization": true,
+  "hypothesis": "Pitchers carry stable count- and handedness-dependent repertoire tilts across seasons. A completed-season hierarchical pitch-group table can transfer those tilts onto the current row's official as-of repertoire prior, improving the deployable pitch-type mixture without observing the current pitch type.",
+  "official_data_only": true,
+  "external_data": false,
+  "test_rows_read": false,
+  "row_independent": true,
+  "selection_contract": {
+    "years": [2020, 2021],
+    "label": "official historical TrackMan pitch_type_group matched by row_id",
+    "competition_target_read": false,
+    "metric": "minimize worst multiclass log loss, then mean multiclass log loss, then candidate_id",
+    "target_years_unopened_during_selection": [2022, 2023, 2024]
+  },
+  "history_contract": {
+    "cutoff": "season strictly less than prediction season",
+    "route": "regular-season rows only",
+    "parent": "pitcher-level pitch-group distribution shrunk to the historical regular-season group frequency with K=100",
+    "cell": "context distribution shrunk to its pitcher parent",
+    "transfer": "multiply the current row official as-of repertoire prior by the historical cell-to-pitcher probability ratio raised to tau, then normalize",
+    "current_pitch_type_used": false
+  },
+  "context_specs": {
+    "pitcher_count": ["pitcher_id", "balls_before", "strikes_before"],
+    "pitcher_hand_count": ["pitcher_id", "batter_hand", "balls_before", "strikes_before"],
+    "pitcher_inning_count": ["pitcher_id", "inning_bucket", "balls_before", "strikes_before"],
+    "pitcher_outs_count": ["pitcher_id", "outs_before", "balls_before", "strikes_before"],
+    "pitcher_base_count": ["pitcher_id", "base_state", "balls_before", "strikes_before"],
+    "pitcher_hand_inning_count": ["pitcher_id", "batter_hand", "inning_bucket", "balls_before", "strikes_before"]
+  },
+  "candidate_grid": {
+    "history_window": [null],
+    "cell_k": [10, 50, 200],
+    "tau": [0.5, 1.0],
+    "official_prior_k": [0, 100],
+    "catboost_geometric_weight": [0.0, 0.25, 0.5, 0.75, 1.0]
+  },
+  "parent_k": 100,
+  "ratio_clip": [0.05, 20.0],
+  "source_2022_artifact": "experiments/results/predictions/v5_pitchtype_moe_c_dev22_2022.npz",
+  "candidate_2022_key": "pitchtype_moe_context_tilt",
+  "goal_gate": {
+    "gamma_grid": [0.05, 0.1, 0.2, 0.35, 0.5, 0.75, 1.0],
+    "required_minimum_full_gain": 132.11992465,
+    "required_positive_R_ci_low": true,
+    "comparison_anchors": ["exact_parent_C", "honest_r_identity", "honest_r_grid"]
+  }
+}

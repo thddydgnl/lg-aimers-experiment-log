@@ -1,0 +1,55 @@
+{
+  "experiment_id": "V5_DENSE_PITCH_JOINT_OUTCOME_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "preregistered_before_source_metrics",
+  "hypothesis": "Separate pitch selectors and outcome experts compound calibration error. A single multiclass model over the Cartesian product of reverse_any control outcome and counter-reconstructed pitch group can learn the joint distribution directly, with success obtained by exact marginalization over pitch groups.",
+  "relationship_to_prior_work": {
+    "outcome_context_schemes": "Prior joint labels split outcomes by count, game type, call, or 15 counter patterns, not by the nearly complete reconstructed pitch group.",
+    "dense_moe": "Prior dense model separately estimated P(group|x) and P(success|group,x), then multiplied two fitted systems.",
+    "new_structure": "One CatBoost MultiClass objective estimates P(outcome,group|x); no separate selector, manual correction, or expert blend inside the model."
+  },
+  "data_contract": {
+    "official_train_and_official_trackman_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "source_validation_seasons": [2020, 2021],
+    "latest_control_label_season_used_for_source_metrics": 2021,
+    "history_rule": "season strictly before validation season",
+    "dense_group_label": "next same-pitcher official pitchmix counter increment inside completed history only",
+    "current_pitch_group_at_inference": false,
+    "other_validation_or_test_rows_at_inference": false,
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "candidate": {
+    "outcome_classes": ["success", "reverse", "middle", "wide"],
+    "pitch_groups": ["fastball", "breaking", "offspeed"],
+    "maximum_joint_classes": 12,
+    "features": "exact-C common features plus row-local e53 K20 pitchmix and completed-history e58 group physics profiles",
+    "catboost": {
+      "loss_function": "MultiClass",
+      "iterations": 500,
+      "depth": 6,
+      "learning_rate": 0.05,
+      "l2_leaf_reg": 12.0,
+      "random_seed": 2026
+    },
+    "success_prediction": "sum probabilities of every success|pitch=* class",
+    "top_level_blend_grid": [0.25, 0.5, 0.75, 1.0],
+    "blend_formula": "parent + gamma * (joint_model - parent)",
+    "selection": "maximize minimum full gain across 2020/2021, then minimum R gain, then smaller gamma"
+  },
+  "semantic_gate": {
+    "minimum_history_dense_group_coverage_each_year": 0.995
+  },
+  "source_gate": {
+    "minimum_full_gain_each_year": 25.0,
+    "minimum_r_gain_each_year": 25.0,
+    "pitcher_cluster_95_ci_lower_positive_full_each_year": true,
+    "pitcher_cluster_95_ci_lower_positive_r_each_year": true,
+    "on_fail": "Close without reading 2022+ candidate labels.",
+    "on_pass": "Freeze gamma and joint recipe before 2022/2023; open 2024 only after G_dev exceeds the locked goal-scale requirement."
+  },
+  "bootstrap_iterations": 2000,
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json"
+}

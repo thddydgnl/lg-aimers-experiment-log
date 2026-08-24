@@ -1,0 +1,57 @@
+{
+  "experiment_id": "V5_GAME_TYPE_STATE_DECONVOLUTION_ORACLE_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "preregistered_before_source_metrics",
+  "hypothesis": "The official pitcher as-of counter mixes R and F outcomes inside the current season. Because the hidden evaluation is dominated by R and the F outcome regime changes sharply, replacing the mixed current-season state with an R-only state may expose a goal-scale structural ceiling that ordinary row-feature changes cannot recover.",
+  "role": "privileged_diagnostic_only",
+  "data_contract": {
+    "official_train_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "source_validation_seasons": [2020, 2021],
+    "latest_label_season_used": 2021,
+    "exact_parent": "v4_m3_c_backtest exact-C catboost_outcome",
+    "automatic_dacon_submission": false
+  },
+  "privileged_oracle_warning": {
+    "uses_same_season_prior_validation_labels": true,
+    "uses_historical_file_order_to_identify_prior_rows": true,
+    "row_independent": false,
+    "eligible_as_candidate": false,
+    "eligible_for_expected_lb": false,
+    "eligible_for_submission": false,
+    "prediction_artifact_must_not_be_saved": true,
+    "purpose": "Measure whether R/F current-state deconvolution has enough structural headroom to justify a separate legal row-local estimator."
+  },
+  "state_definition": {
+    "aggregate_state": "Use the official row-local asof_pitcher_n and asof_pitcher_success_rate minus the frozen state at the end of the preceding season, exactly as E14.",
+    "oracle_r_state": "For each historical R validation row, count and sum only earlier R rows for the same pitcher in the same season, using the official historical sequence.",
+    "prior": "R control_success mean from seasons strictly before the validation season.",
+    "correction": "On R rows only, exact-C plus gamma times (R-only EB current-season rate minus aggregate EB current-season rate). F rows remain exact-C.",
+    "clip": [0.000001, 0.999999]
+  },
+  "semantic_audit": {
+    "required_aggregate_n_match_rate": 0.995,
+    "required_aggregate_success_match_rate": 0.995,
+    "comparison": "Official E14 current-season deltas versus counts and outcomes of all earlier same-season pitcher rows in historical file order.",
+    "on_fail": "Declare the oracle invalid and close without metrics or 2022+ labels."
+  },
+  "source_grid": {
+    "eb_k": [10, 25, 50, 100, 200],
+    "gammas": [0.05, 0.1, 0.2, 0.35, 0.5, 0.75, 1.0, 1.5],
+    "selection_order": [
+      "maximum minimum full-score gain across 2020 and 2021",
+      "maximum minimum R-score gain",
+      "maximum mean full-score gain",
+      "larger k then smaller gamma"
+    ]
+  },
+  "headroom_gate": {
+    "required_minimum_full_gain_each_year": 132.11992465293324,
+    "required_minimum_r_gain_each_year": 132.11992465293324,
+    "pitcher_cluster_95_ci_lower_positive_each_year": true,
+    "on_fail": "Close the R/F state-deconvolution axis without reading 2022+ labels.",
+    "on_pass": "Preregister and build a separate legal estimator that predicts the R-specific state from only current-row official fields and completed-season frozen state; the oracle itself remains permanently ineligible."
+  },
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json"
+}

@@ -1,0 +1,57 @@
+{
+  "experiment_id": "V5_PITCHER_CONTEXT_DIFFERENTIAL_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "preregistered_before_source_metrics",
+  "hypothesis": "A pitcher's level drifts across seasons, but within-pitcher sensitivity to batter hand, two-strike situations, and runners on base may persist. Effect-coded completed-history differentials can add stable information without importing stale pitcher levels.",
+  "data_contract": {
+    "official_train_only": true,
+    "external_data": false,
+    "test_rows_read": false,
+    "source_label_seasons": [2019, 2020],
+    "source_validation_seasons": [2020, 2021],
+    "validation_or_test_rows_used_to_build_tables": false,
+    "deployment_feature": "frozen prior-season pitcher/context table plus the current row's pitcher_id and context",
+    "row_independent": true
+  },
+  "contexts": {
+    "batter_hand": "official batter_hand category",
+    "two_strike": "1 if strikes_before == 2 else 0",
+    "runners": "1 if num_runners_on > 0 else 0"
+  },
+  "estimator": {
+    "history_game_type": "R only",
+    "pitcher_level": "completed-history pitcher mean",
+    "cell_effect": "(cell_success + k*pitcher_mean)/(cell_n+k) - pitcher_mean",
+    "effect_coding": "subtract the history-frequency-weighted mean cell effect within each pitcher",
+    "unseen_fallback": 0.0,
+    "application": "add gamma times the sum of selected context effects to exact-C on R rows; F stays exact-C",
+    "probability_clip": [0.000001, 0.999999]
+  },
+  "source_grid": {
+    "history_windows": ["all", 2],
+    "shrinkage_k": [50, 100, 300, 1000],
+    "context_subsets": [
+      ["batter_hand"],
+      ["two_strike"],
+      ["runners"],
+      ["batter_hand", "two_strike"],
+      ["batter_hand", "runners"],
+      ["two_strike", "runners"],
+      ["batter_hand", "two_strike", "runners"]
+    ],
+    "gammas": [0.05, 0.1, 0.2, 0.35, 0.5, 0.75, 1.0],
+    "selection_order": [
+      "maximum minimum full-score gain across 2020 and 2021",
+      "maximum minimum R-score gain",
+      "maximum mean full-score gain",
+      "fewer contexts, smaller gamma, larger k, longer history"
+    ]
+  },
+  "source_gate": {
+    "minimum_full_gain_each_year": 25.0,
+    "minimum_r_gain_each_year": 25.0,
+    "pitcher_cluster_95_ci_lower_positive_each_year": true,
+    "on_fail": "close without opening 2022+ metrics",
+    "on_pass": "freeze one recipe before 2022"
+  }
+}

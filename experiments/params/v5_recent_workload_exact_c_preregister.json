@@ -1,0 +1,51 @@
+{
+  "experiment_id": "V5_RECENT_WORKLOAD_EXACT_C_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_before_2022_2023_control_metrics",
+  "hypothesis": "Replacing ambiguous reduced-denominator workload lower bounds with source-validated external-fold multiplier predictions lets exact-C distinguish whether identical recent success rates came from short or long appearances, improving temporal reliability without using validation order or labels.",
+  "source_lock": "experiments/params/v5_recent_workload_decoder_lock.json",
+  "candidate": {
+    "parent_recipe": "exact-C catboost_outcome reverse_any",
+    "features_added": ["recent_denominators", "recent_workload_decoder"],
+    "all_other_features_hyperparameters_and_drop_list": "identical to exact-C",
+    "decoder_training_features": "leave-one-season-out within each outer training history",
+    "decoder_validation_features": "models fit only on seasons strictly before the validation year",
+    "route": "R only; every F prediction remains the corresponding exact-C prediction bit-for-bit",
+    "blend_grid": [0.25, 0.5, 0.75, 1.0],
+    "formula_on_R": "exact_C + gamma * (decoder_C - exact_C)",
+    "selection": "maximize minimum full gain across 2022/2023 and exact-C, lower-only C, honest identity, and honest grid anchors; then minimum R gain; then smaller gamma"
+  },
+  "development": {
+    "years": [2022, 2023],
+    "unopened_confirmation_year": 2024,
+    "same_parent_ablation": "V5_RECENT_DENOMINATOR_C_V1 predictions",
+    "required": {
+      "G_dev_minimum_full_gain_strictly_greater_than": 132.11992465293324,
+      "same_parent_R_point_gain_each_year_strictly_positive": true,
+      "same_parent_R_pitcher_cluster_95_ci_lower_each_year_strictly_positive": true,
+      "full_pitcher_cluster_95_ci_lower_against_every_anchor_each_year_strictly_positive": true,
+      "F_preserved_exactly": true,
+      "decoder_row_order_and_duplicate_invariance": true
+    },
+    "bootstrap_iterations": 2000,
+    "on_fail": "Close without generating or reading a 2024 decoder candidate.",
+    "on_pass": "Write immutable gamma and artifact hashes before one 2024 confirmation run."
+  },
+  "complexity": {
+    "outer_components": ["exact_C", "decoder_C"],
+    "maximum_outer_components": 2,
+    "nonnegative_weights_sum_one": true,
+    "signed_residual_stack": false
+  },
+  "legality": {
+    "official_train_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "test_aggregation_or_order": false,
+    "future_labels": false,
+    "current_pitch_information": false,
+    "automatic_dacon_submission": false
+  },
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json",
+  "goal_completion_claimed": false
+}

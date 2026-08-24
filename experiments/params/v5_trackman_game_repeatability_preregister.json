@@ -1,0 +1,46 @@
+{
+  "experiment_id": "V5_TRACKMAN_GAME_REPEATABILITY_V1",
+  "status": "locked_before_source_model_or_scores",
+  "created_at_kst": "2026-08-22",
+  "hypothesis": "Pitch-group pooled variance still mixes true pitch-to-pitch execution noise with deliberate or slow game-to-game changes. Removing a separate pitcher x game x coarse-pitch mean should isolate repeatability that transfers as command skill.",
+  "legality": {
+    "official_open_data_only": true,
+    "current_or_future_trackman": false,
+    "target_used_in_profile": false,
+    "history_cutoff": "TrackMan season strictly before every modeled row season",
+    "test_aggregation_or_order": false,
+    "row_independent_inference": true,
+    "automatic_submission": false
+  },
+  "feature_recipe": {
+    "cell": ["pitcher_id", "trackman_game_id", "pitch_type_group"],
+    "minimum_cell_pitches": 3,
+    "metrics": ["rel_speed", "spin_rate", "induced_vert_break", "horz_break", "extension", "rel_height", "rel_side", "zone_speed"],
+    "statistics": ["pooled within-cell sd", "between-cell sd around pitcher-pitch-group mean", "within variance share", "within-cell release covariance ellipse"],
+    "window": "all completed seasons",
+    "parent_model": "exact component C seed 2026 with identical features and hyperparameters",
+    "candidate_model": "parent_model plus only the e118 game-repeatability profile"
+  },
+  "source_protocol": {
+    "model_years": [2020, 2021],
+    "selection_year": 2020,
+    "source_confirmation_year": 2021,
+    "blend_route": "R only; F remains exact-C",
+    "gamma_grid": [0.1, 0.25, 0.5, 0.75, 1.0],
+    "selection": "maximize 2020 R gain, then 2020 full gain, then smaller gamma",
+    "advance_gate": {
+      "minimum_R_gain_each_year": 50.0,
+      "minimum_full_gain_each_year": 25.0,
+      "R_pitcher_cluster_95_ci_lower_positive_each_year": true,
+      "full_pitcher_cluster_95_ci_lower_positive_each_year": true
+    },
+    "on_fail": "close before 2022-2024",
+    "on_pass": "write an immutable development lock before 2022 and 2023"
+  },
+  "completion": {
+    "source_metrics_cannot_complete_goal": true,
+    "required_robust_gain": 132.11992465293324,
+    "actual_dacon_submission_is_manual": true
+  },
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json"
+}

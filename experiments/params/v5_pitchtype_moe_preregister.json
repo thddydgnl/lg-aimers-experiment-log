@@ -1,0 +1,82 @@
+{
+  "experiment_id": "V5_PITCHTYPE_MOE_OUTCOME_V1",
+  "created_before_any_new_pitchtype_moe_development_prediction": true,
+  "hypothesis": "The current pitch group is hidden at inference, but its selection distribution is predictable from legal pre-pitch context and frozen pitcher history. Four strong exact-C outcome experts, marginalized by a CatBoost pitch-group model, can recover stable control difficulty that a single global outcome tree averages away.",
+  "relationship_to_prior_work": {
+    "e22_mixture": "same probabilistic factorization but the old experiment used an SGD pitch selector and the weak S4 Linear/HGB parent rather than exact-C CatBoost outcome experts",
+    "trackman_lupi": "the recent LUPI test appended probabilities and imputed physics as ordinary global-tree features; it did not fit group-conditional exact-C experts or explicitly marginalize them",
+    "pitchtype_failure_prior": "the prior used smoothed failure-rate tables, not strong group-conditional outcome models"
+  },
+  "official_data_only": true,
+  "external_data": false,
+  "test_rows_read": false,
+  "row_independent": true,
+  "deployment_contract": {
+    "historical_expert_label": "pitch_type_group from official 2019-2024 TrackMan rows matched to historical main rows",
+    "inference_mixture_weights": "CatBoost probabilities fitted only on historical matched rows and scored from the current row's legal pre-pitch fields",
+    "current_pitch_type_at_inference": false,
+    "regular_season": "pitch-type MoE direction",
+    "final_or_postseason": "each comparison anchor unchanged"
+  },
+  "diagnostic_oracle_contract": {
+    "purpose": "measure whether current pitch group contains enough signal before attributing failure to the deployable selector",
+    "uses_true_current_group_on_historical_validation": true,
+    "permitted_use": "diagnostic report only",
+    "forbidden_use": [
+      "candidate selection",
+      "Goal completion",
+      "2025 inference",
+      "submission packaging"
+    ]
+  },
+  "parent_recipe": {
+    "features": [
+      "base",
+      "e14",
+      "platoon",
+      "hand_matchup",
+      "e14_hand_cells",
+      "e14_count_cells",
+      "e14_type_count_cells",
+      "trackman_rich",
+      "batter_e14",
+      "batter_middle_e14"
+    ],
+    "stage1_addition": "e22_cat",
+    "expert_excludes_stage1_probability_columns": true,
+    "e14_k": 50,
+    "pitcher_k": 50,
+    "platoon_k": 50,
+    "batter_e14_k": 80,
+    "batter_middle_k": 100,
+    "drop_pitcher_id": true,
+    "drop_group_specific_trackman_e58": true,
+    "outcome_scheme": "reverse_any",
+    "params": "experiments/params/v3_outcome_seed2026.json"
+  },
+  "stages": {
+    "2022": "v5_pitchtype_moe_c_dev22",
+    "2023": "v5_pitchtype_moe_c_dev23",
+    "2024": "v5_pitchtype_moe_c_confirm24"
+  },
+  "candidate_key": "catboost_pitchtype_moe",
+  "diagnostic_component_prefix": "catboost_pitchtype_moe__diagnostic_",
+  "selection": {
+    "development_years": [2022, 2023],
+    "gamma_grid": [0.05, 0.1, 0.2, 0.35, 0.5, 0.75, 1.0],
+    "comparison_anchors": [
+      "exact_parent_C",
+      "honest_r_identity",
+      "honest_r_grid"
+    ],
+    "early_2022_required_full_point_gain": 132.11992465,
+    "early_2022_required_R_ci_low": 0.0,
+    "locked_rule": "maximize the minimum full-score gain across both development years and all anchors among trials with positive R point gain and positive R pitcher-cluster CI lower bound in every cell"
+  },
+  "confirmation": {
+    "year": 2024,
+    "read_only_after_locked_selection": true,
+    "completion_formula": "1090.9100565103 + 0.75 * max(0, min(G_dev_full, G_confirm_full, G_confirm_full_ci_low))",
+    "required_expected_score_strictly_greater_than": 1190.0
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "experiment_id": "V5_MATCHUP_FACTORIZATION_FEASIBILITY_V1",
+  "created_at_kst": "2026-08-21",
+  "status": "locked_before_execution",
+  "purpose": "Test whether a true low-rank pitcher-batter interaction transfers out of time beyond the same model's additive player and context effects.",
+  "candidate_status": "diagnostic_only_not_submission_eligible",
+  "novelty_audit": {
+    "existing_deepfm": "v4_deepfm* dropped pitcher_id, so no pitcher-batter latent interaction existed",
+    "existing_pitcher_batter_season_interactions": "six arithmetic combinations of separate E14 rates, not collaborative factorization"
+  },
+  "data_rules": {
+    "official_train_only": true,
+    "external_data_or_api": false,
+    "regular_season_only": true,
+    "history_rule": "season strictly before target year",
+    "test_rows_read": false,
+    "2024_labels_used": false,
+    "row_independent_inference": true
+  },
+  "folds": {
+    "development_targets": [2021, 2022, 2023],
+    "locked_confirmation": 2024
+  },
+  "shared_model": {
+    "player_terms": ["pitcher bias", "batter bias"],
+    "categorical_context": [
+      "balls_before x strikes_before",
+      "pitcher_hand x batter_hand",
+      "pitcher_team_id",
+      "batter_team_id",
+      "top_bottom"
+    ],
+    "numeric_context": [
+      "inning",
+      "outs_before",
+      "num_runners_on",
+      "score_diff_pitcher_team",
+      "li",
+      "log1p(asof_pitcher_n)",
+      "asof_pitcher_success_rate",
+      "asof_pitcher_reverse_rate",
+      "asof_pitcher_middle_rate",
+      "asof_pitcher_ball_rate",
+      "asof_pitcher_strike_rate",
+      "asof_pitcher_prev1_game_success_rate",
+      "asof_pitcher_prev3_game_success_rate",
+      "asof_pitcher_prev5_game_success_rate",
+      "asof_pitcher_prev1_game_middle_rate",
+      "asof_pitcher_prev3_game_middle_rate",
+      "asof_pitcher_prev5_game_middle_rate",
+      "log1p(asof_batter_n)",
+      "asof_batter_success_rate",
+      "asof_batter_middle_rate",
+      "log1p(asof_pitcher_pitchmix_n)",
+      "asof_pitcher_fastball_rate",
+      "asof_pitcher_breaking_rate",
+      "asof_pitcher_offspeed_rate"
+    ],
+    "unknown_player_policy": "index zero with zero-initialized embedding",
+    "objective": "binary cross entropy",
+    "optimizer": "AdamW",
+    "epochs": 8,
+    "batch_size": 16384,
+    "learning_rate": 0.01,
+    "weight_decay": 0.0001,
+    "random_seed": 20260821,
+    "device": "cuda"
+  },
+  "ablation": {
+    "parent": "all shared additive terms, rank=0",
+    "candidate": "exact parent plus dot(pitcher_embedding, batter_embedding) / sqrt(4)",
+    "latent_rank": 4,
+    "all_other_parameters_held_fixed": true
+  },
+  "metrics": {
+    "primary": "paired normalized R Brier gain of rank-4 over additive",
+    "secondary": "ROC-AUC delta",
+    "uncertainty": "pitcher-cluster bootstrap 95% interval with 1000 fixed-seed replicates"
+  },
+  "proceed_gate": {
+    "requirements": [
+      "positive point gain in 2021, 2022, and 2023",
+      "positive pitcher-cluster 95% lower gain in at least two of three years",
+      "positive ROC-AUC delta in all three years"
+    ],
+    "on_pass": "preregister a single rank-4 matchup recipe and nonnegative blend against exact C on 2022/2023",
+    "on_fail": "reject matchup factorization without 2024"
+  }
+}

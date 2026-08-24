@@ -1,0 +1,57 @@
+{
+  "experiment_id": "V5_DENSE_MULTITASK_BRIER_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "preregistered_before_source_metrics",
+  "hypothesis": "The operational control label shares structure with four official counter increments and the dense counter-reconstructed pitch group. Shared MultiRMSE trees can use those auxiliary tasks without the rare-class fragmentation of a Cartesian joint classifier or the selector-error multiplication of a mixture of experts.",
+  "relationship_to_prior_work": {
+    "multi_brier": "Prior MultiRMSE used mutually exclusive reverse_any one-hot heads only and scored below exact C.",
+    "dense_joint": "The prior 12-class Cartesian classifier had positive source direction but failed the 2021 +25 gate.",
+    "new_structure": "One continuous primary success head (loss weight 4 through scale 2) shares every tree with reverse, middle, ball, strike, fastball, breaking, and offspeed auxiliary heads. No Cartesian class and no separate selector is fitted."
+  },
+  "data_contract": {
+    "official_train_and_official_trackman_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "source_validation_seasons": [2020, 2021],
+    "history_rule": "season strictly before validation season",
+    "auxiliary_label_rule": "next same-pitcher official as-of counter increment inside completed history only",
+    "current_pitch_group_at_inference": false,
+    "validation_auxiliary_labels_at_inference": false,
+    "other_validation_or_test_rows_at_inference": false,
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "candidate": {
+    "primary_head": "control_success scaled by 2.0 during MultiRMSE and divided by 2.0 at inference",
+    "auxiliary_heads": ["reverse", "middle", "ball", "strike", "fastball", "breaking", "offspeed"],
+    "features": "exact-C common features plus row-local e53 K20 pitchmix and completed-history e58 group physics profiles",
+    "catboost": {
+      "loss_function": "MultiRMSE",
+      "iterations": 700,
+      "depth": 7,
+      "learning_rate": 0.04,
+      "l2_leaf_reg": 30.0,
+      "random_seed": 2026,
+      "multitask_success_scale": 2.0
+    },
+    "top_level_blend_grid": [0.1, 0.2, 0.3, 0.4, 0.5],
+    "blend_formula": "parent_exact_C + gamma * (dense_multitask - parent_exact_C)",
+    "route": "all rows",
+    "selection": "maximize minimum full gain across 2020/2021, then minimum R gain, then smaller gamma"
+  },
+  "semantic_gate": {
+    "minimum_history_usable_coverage_each_year": 0.995,
+    "expected_head_count": 8,
+    "success_scale_exact": 2.0
+  },
+  "source_gate": {
+    "minimum_full_gain_each_year": 25.0,
+    "minimum_r_gain_each_year": 25.0,
+    "pitcher_cluster_95_ci_lower_positive_full_each_year": true,
+    "pitcher_cluster_95_ci_lower_positive_r_each_year": true,
+    "on_fail": "Close without reading 2022+ candidate labels.",
+    "on_pass": "Freeze gamma and recipe before 2022/2023; open 2024 only after the locked development contract passes."
+  },
+  "bootstrap_iterations": 2000,
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json"
+}

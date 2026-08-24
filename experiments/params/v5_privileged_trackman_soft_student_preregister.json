@@ -1,0 +1,80 @@
+{
+  "experiment_id": "V5_PRIVILEGED_TRACKMAN_SOFT_STUDENT_V1",
+  "created_at_kst": "2026-08-21",
+  "status": "locked_before_student_artifact_materialization",
+  "relation_to_failed_profile_ablation": "This is a distinct distillation structure. The failed E80 aggregate feature bundle remains rejected and is not retuned. Valid out-of-time per-pitch teacher probabilities are reused as soft labels instead of being averaged into nine profile features.",
+  "scope": {
+    "development_years": [2022, 2023],
+    "locked_confirmation_year": 2024,
+    "game_type_route": "candidate only on R; exact parent C unchanged on F",
+    "candidate_complexity": "two-component nonnegative convex blend: exact parent C plus one soft-label student"
+  },
+  "data_rules": {
+    "official_train_and_trackman_only": true,
+    "external_data_or_api": false,
+    "current_or_validation_trackman_at_inference": false,
+    "source_season_labels_in_student_fit": false,
+    "source_season_labels_in_artifact": "integrity check only; teacher_alpha is fixed to zero",
+    "test_rows_read": false,
+    "test_row_aggregation": false,
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "soft_target": {
+    "source_artifact": "experiments/results/v5_trackman_teacher_scores_dev.npz",
+    "definition": "0.5 + physics_teacher_probability - mean(physics_teacher_probability within the completed source season)",
+    "reason": "preserve target-aware physical ranking while removing historical teacher calibration and base-rate drift",
+    "teacher_alpha": 0.0,
+    "fold_teacher_years": {
+      "2022": [2020, 2021],
+      "2023": [2020, 2021, 2022]
+    },
+    "fit_rows": "matched R rows in the listed completed teacher years only"
+  },
+  "student": {
+    "model": "catboost_teacher RMSE regressor",
+    "features": [
+      "base",
+      "e14",
+      "platoon",
+      "hand_matchup",
+      "e14_hand_cells",
+      "e14_count_cells",
+      "e14_type_count_cells",
+      "trackman_rich",
+      "trackman_stability",
+      "batter_e14",
+      "batter_middle_e14"
+    ],
+    "feature_policy": "retain pitcher_id and all pitch-group-specific TrackMan profile columns because the supervised task is physical-teacher imitation",
+    "params": "experiments/params/v4_teacher_rich_cat.json",
+    "fixed_hyperparameters": {
+      "e14_k": 50.0,
+      "k_pitcher": 50.0,
+      "k_platoon": 50.0,
+      "batter_e14_k": 80.0,
+      "batter_middle_k": 100.0,
+      "inner_validation": "none",
+      "fit_game_types": ["R"]
+    }
+  },
+  "blend": {
+    "parent": "v3_sparse_c_backtest/catboost_outcome",
+    "student_weight_grid": [0.1, 0.25, 0.5, 1.0],
+    "formula_on_R": "(1-w) * exact_parent_C + w * soft_student",
+    "formula_on_F": "exact_parent_C",
+    "selection": "maximize the minimum 2022/2023 R point gain over exact parent, breaking ties by minimum pitcher-cluster 95% lower gain"
+  },
+  "development_gate": {
+    "bootstrap": "pitcher-cluster 95% interval with 1000 fixed-seed replicates",
+    "requirements": [
+      "one fixed grid weight has positive R point gain over exact parent in both 2022 and 2023",
+      "the same weight has positive R 95% lower gain over exact parent in both years",
+      "the same routed candidate has positive full point gain over exact parent in both years",
+      "the same candidate has positive R point gain over both honest R anchors in both years"
+    ],
+    "on_fail": "reject without source-2023 teacher artifact or 2024 student run",
+    "on_pass": "lock weight and recipe before a single 2024 confirmation"
+  },
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json"
+}

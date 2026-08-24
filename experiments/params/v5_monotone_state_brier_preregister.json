@@ -1,0 +1,89 @@
+{
+  "experiment_id": "V5_MONOTONE_STATE_BRIER_V1",
+  "created_at_kst": "2026-08-21",
+  "status": "locked_before_execution",
+  "purpose": "Test the untried H2 combination of direct Brier regression, compact row-local hierarchical state, and monotonic state constraints.",
+  "novelty_audit": {
+    "v4_player_state": "Ridge residual correction over a frozen M3 prediction; no direct Brier model or monotonic constraint",
+    "v5_dynamic_state": "CatBoost RMSE residual around a state base; no monotonic constraint",
+    "existing_lightgbm": "binary classification or temporal residual models; no direct compact state Brier model with monotone constraints"
+  },
+  "data_rules": {
+    "official_train_only": true,
+    "external_data_or_api": false,
+    "fit_game_type": "R only",
+    "history_rule": "all labels and frozen entity states use seasons strictly before the target year",
+    "state_rule": "current row official cumulative counters minus entity state frozen before that row season",
+    "test_rows_read": false,
+    "test_row_aggregation": false,
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "folds": {
+    "development_targets": [2022, 2023],
+    "locked_confirmation": 2024,
+    "deployment": 2025
+  },
+  "fixed_estimator": {
+    "family": "LightGBM regressor",
+    "objective": "regression_l2 (exact Brier loss for binary labels)",
+    "learning_rate": 0.02,
+    "n_estimators": 1200,
+    "num_leaves": 15,
+    "min_child_samples": 1000,
+    "lambda_l2": 20.0,
+    "feature_fraction": 1.0,
+    "bagging_fraction": 1.0,
+    "early_stopping": false,
+    "random_seed": 20260821,
+    "prediction_clip": [0.001, 0.999],
+    "season_decay": 0.8
+  },
+  "structural_ablation": {
+    "parent": "same fixed direct-Brier LightGBM on official base columns, excluding pitcher_id and batter_id",
+    "candidate": "exact parent plus a fixed 16-column hierarchical pitcher/batter current-state block",
+    "hierarchical_priors": {
+      "completed_history_k": 200.0,
+      "pitcher_current_k": 50.0,
+      "batter_current_k": 100.0,
+      "league_prior": "mean R target from at most the latest three completed seasons"
+    },
+    "candidate_features": [
+      "pitcher completed-history posterior",
+      "pitcher current-season posterior k50",
+      "pitcher current reliability k50",
+      "pitcher current delta from history",
+      "pitcher raw current-season rate",
+      "batter completed-history posterior",
+      "batter current-season posterior k100",
+      "batter current reliability k100",
+      "batter current delta from history",
+      "pitcher-batter posterior gap",
+      "pitcher posterior times count advantage",
+      "pitcher posterior times ball-strike gap",
+      "pitcher posterior times same-hand",
+      "pitcher posterior times runner-present",
+      "pitcher and batter state uncertainty proxies"
+    ],
+    "monotone_positive": [
+      "asof_pitcher_success_rate",
+      "state_pitcher_history",
+      "state_pitcher_posterior",
+      "state_pitcher_delta",
+      "state_batter_history",
+      "state_batter_posterior"
+    ],
+    "all_other_constraints": 0
+  },
+  "development_gate": {
+    "uncertainty": "pitcher-cluster bootstrap 95% interval with 1000 fixed-seed replicates",
+    "requirements": [
+      "positive R point gain over exact direct-Brier parent in both 2022 and 2023",
+      "positive R 95% gain lower bound over exact direct-Brier parent in both 2022 and 2023",
+      "positive R point gain over exact C and both honest R anchors in both 2022 and 2023"
+    ],
+    "on_fail": "reject without running 2024",
+    "on_pass": "freeze the exact recipe and run 2024 once"
+  },
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json"
+}

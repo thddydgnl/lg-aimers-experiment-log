@@ -1,0 +1,55 @@
+{
+  "experiment_id": "V5_PHYSICS_CLUSTER_JOINT_OUTCOME_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_before_source_training",
+  "hypothesis": "The current-pitch TrackMan teacher has large oracle headroom, while direct probability distillation failed. A target-free discrete physical archetype can instead be used as a historical auxiliary variable in one proper joint likelihood; summing success classes learns the deployable marginal without regressing or observing validation/test physics.",
+  "novelty_relative_to_closed_axes": {
+    "privileged_trackman_teacher": "Previously predicted control directly from current physics and tried to distill that scalar probability.",
+    "trackman_archetype_c": "Previously clustered completed-history pitcher profiles, not individual historical current-pitch physics as an auxiliary joint label.",
+    "fine_pitch_joint": "Used categorical pitch names; this uses eight continuous physical measurements clustered without the control target.",
+    "this_candidate": "One multiclass model over reverse_any outcome times 12 history-only physics clusters, followed by exact success marginalization."
+  },
+  "source_protocol": {
+    "years": [2020, 2021],
+    "parent": "exact C",
+    "selection_route": "R",
+    "ranking": "maximize minimum R gain, then minimum full gain, then mean R gain, then prefer smaller gamma",
+    "top_level_blend_grid": [0.1, 0.25, 0.5, 0.75, 1.0],
+    "bootstrap_iterations": 2000,
+    "gate": {
+      "minimum_R_gain_each_year": 25.0,
+      "minimum_full_gain_each_year": 0.0,
+      "R_pitcher_cluster_95_ci_lower_positive_each_year": true,
+      "full_pitcher_cluster_95_ci_lower_positive_each_year": true
+    },
+    "on_fail": "Close without reading 2022, 2023, or 2024 candidate metrics.",
+    "on_pass": "Lock gamma and run fresh 2022/2023 development folds."
+  },
+  "candidate": {
+    "model": "catboost_physics_joint",
+    "params": "experiments/params/v5_physics_joint_catboost.json",
+    "outcome_scheme": "reverse_any",
+    "physics_columns": ["rel_speed", "spin_rate", "induced_vert_break", "horz_break", "extension", "rel_height", "rel_side", "zone_speed"],
+    "physics_preprocessing": "history-only median/IQR scaling, clip to [-6,6]",
+    "physics_clusterer": {"algorithm": "MiniBatchKMeans", "n_clusters": 12, "n_init": 10, "max_iter": 200, "batch_size": 8192, "random_seed": 2026},
+    "features": ["base", "e14", "platoon", "hand_matchup", "e14_hand_cells", "e14_count_cells", "e14_type_count_cells", "trackman_rich", "batter_e14", "batter_middle_e14", "pitchmix_e14", "fine_pitch_latent"],
+    "drop_features": ["pitcher_id"],
+    "prediction": "Sum all learned joint-class probabilities whose class starts with success|.",
+    "current_pitch_physics_at_inference": false,
+    "current_pitch_type_at_inference": false,
+    "row_independent_inference": true
+  },
+  "semantic_gate": {
+    "minimum_history_physics_label_coverage_each_year": 0.5,
+    "required_cluster_count_each_year": 12,
+    "minimum_success_joint_classes_each_year": 12
+  },
+  "data_contract": {
+    "official_open_data_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "future_labels_or_future_trackman": false,
+    "automatic_dacon_submission": false
+  },
+  "goal_completion_claimed": false
+}

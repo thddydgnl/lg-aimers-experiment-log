@@ -1,0 +1,65 @@
+{
+  "experiment_id": "V5_ROW_ID_SOURCE_AUDIT",
+  "created_at_kst": "2026-08-22",
+  "status": "preregistered_before_source_metric_evaluation",
+  "objective": "Determine whether the numeric suffix of the official row_id contains a portable, row-local signal rather than file-order leakage.",
+  "policy_boundary": {
+    "allowed_inputs": [
+      "open/data/train.csv rows from seasons 2019 through 2021 only",
+      "each row's own row_id and game_type",
+      "frozen exact-C predictions for validation seasons 2020 and 2021"
+    ],
+    "forbidden_inputs": [
+      "any 2022, 2023, or 2024 label or prediction metric",
+      "test-row counts, maxima, ordering, distribution, or relationships between test rows",
+      "features computed from any other validation or test row"
+    ],
+    "deployment_rule": "At inference, only the current row's suffix may be parsed. No test-level centering, ranking, bin quantiles, or aggregation is allowed.",
+    "documentation_semantics": "open/data_description.md defines row_id only as a unique sample identifier used to match submissions."
+  },
+  "source_protocol": {
+    "structure_years": [2019, 2020, 2021],
+    "transfer_pairs": [
+      {
+        "fit": 2019,
+        "evaluate": 2020,
+        "fit_response": "control_success minus the 2019 game_type mean",
+        "parent": "v4_m3_c_backtest_2020_2020"
+      },
+      {
+        "fit": 2020,
+        "evaluate": 2021,
+        "fit_response": "control_success minus frozen exact-C prediction",
+        "parent": "v4_m3_c_backtest_2021_2021"
+      }
+    ],
+    "position_definition": "numeric row_id suffix minus the first suffix of that source season plus one",
+    "position_denominator": 250000,
+    "fixed_block_widths": [5000, 10000, 25000, 50000],
+    "shrinkage_priors": [1000, 5000, 20000],
+    "scopes": ["global", "game_type"],
+    "alphas": [0.25, 0.5, 1.0],
+    "selection_order": [
+      "maximum minimum full-score gain across the two transfers",
+      "maximum minimum R-score gain",
+      "maximum mean full-score gain",
+      "prefer smaller alpha, larger prior, and larger block width"
+    ],
+    "bootstrap": {
+      "unit": "pitcher_id cluster",
+      "iterations": 2000,
+      "confidence": 0.95,
+      "seed_base": 52000
+    }
+  },
+  "source_gate": {
+    "semantic_portability": "row_id must not be merely an exact encoding of CSV row position and its documented meaning must support ordered semantics",
+    "minimum_full_gain_each_transfer": 25.0,
+    "minimum_r_gain_each_transfer": 10.0,
+    "minimum_full_cluster_ci_lower_each_transfer": 0.0,
+    "minimum_r_cluster_ci_lower_each_transfer": 0.0,
+    "pass_rule": "all semantic and performance conditions must pass",
+    "on_fail": "close row_id as a deployable axis and do not open 2022+ for it",
+    "on_pass": "freeze one recipe in a new preregistration before any 2022 metric is read"
+  }
+}

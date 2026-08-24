@@ -1,0 +1,47 @@
+{
+  "experiment_id": "V5_EXACT_C_MULTISEED_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "preregistered_before_source_metrics",
+  "hypothesis": "CatBoost ordered boosting retains seed-specific variance in the exact component-C recipe. A fixed three-seed uniform bag may reduce that variance without changing data, features, routing, or calibration.",
+  "relationship_to_prior_work": {
+    "prior_2024_runs": "Single-seed diagnostics exist for a weaker non-TrackMan V3 outcome recipe, but no seed ensemble and no 2020/2021 exact-C source test exists.",
+    "not_a_retune": "The exact-C feature recipe and all CatBoost hyperparameters except random_seed remain frozen.",
+    "direct_current_state_duplicate_avoided": "Direct pitchmix/current-state exact-C features were already tested in V3/V4/V5 and are not repeated here."
+  },
+  "data_contract": {
+    "official_train_and_official_trackman_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "source_validation_seasons": [2020, 2021],
+    "latest_control_label_season_used_for_source_metrics": 2021,
+    "history_rule": "season strictly before validation season",
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "parent": {
+    "recipe": "exact component C",
+    "source_artifacts": {
+      "2020": "v4_m3_c_backtest_2020_2020.npz",
+      "2021": "v4_m3_c_backtest_2021_2021.npz"
+    },
+    "random_seed": 2026,
+    "outcome_scheme": "reverse_any"
+  },
+  "candidate": {
+    "seeds": [1, 7, 2026],
+    "weights": [0.3333333333333333, 0.3333333333333333, 0.3333333333333333],
+    "selection": "none; arithmetic probability mean fixed before source metrics",
+    "component_count": 3,
+    "all_other_parameters": "identical to exact component C"
+  },
+  "source_gate": {
+    "minimum_full_gain_each_year": 25.0,
+    "minimum_r_gain_each_year": 25.0,
+    "pitcher_cluster_95_ci_lower_positive_full_each_year": true,
+    "pitcher_cluster_95_ci_lower_positive_r_each_year": true,
+    "on_fail": "Close without reading 2022+ candidate labels.",
+    "on_pass": "Freeze the uniform three-seed recipe, then build 2022/2023 candidate components and compare against exact parent and both honest anchors before opening 2024."
+  },
+  "bootstrap_iterations": 1000,
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json"
+}

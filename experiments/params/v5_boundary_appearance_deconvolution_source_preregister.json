@@ -1,0 +1,94 @@
+{
+  "experiment_id": "V5_BOUNDARY_APPEARANCE_DECONVOLUTION_SOURCE_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_before_source_semantic_or_control_metrics",
+  "parent_validation_contract": "experiments/params/v5_validation_contract_v2.json",
+  "hypothesis": "For a pitcher's first five appearances of a season, the official previous-five-game rate contains a mixture of a frozen suffix of the preceding season and already completed appearances in the current season. Combining that row-local statistic with the frozen pre-season suffix and the exact-C season counter can deconvolve the number and successes of pitches already thrown in the current appearance. This exposes a legal within-appearance state without grouping, ordering, or comparing evaluation rows.",
+  "data_policy": {
+    "official_open_data_only": true,
+    "source_validation_years": [2020, 2021],
+    "latest_label_year_allowed": 2021,
+    "years_forbidden_until_source_gate_passes": [2022, 2023, 2024],
+    "test_rows_read": false,
+    "external_data_or_api": false,
+    "candidate_inference_uses_only_current_row_and_frozen_training_history": true,
+    "evaluation_row_order_or_batch_dependence": false,
+    "same_season_labels_used_by_legal_candidate": false,
+    "automatic_submission": false
+  },
+  "semantic_audit": {
+    "appearance_definition": "pitcher_id within a game reconstructed from official chronological training rows; reconstruction is diagnostic only",
+    "window_definition_to_test": "previous five completed pitcher appearances across the season boundary",
+    "minimum_official_prev5_denominator_match_rate": 0.995,
+    "minimum_official_prev5_success_count_match_rate": 0.995,
+    "minimum_exact_denominator_true_boundary_k_accuracy": 0.7,
+    "minimum_exact_denominator_covered_pitch_row_rate": 0.03,
+    "failure_action": "close the hypothesis without reading 2022 or later labels"
+  },
+  "legal_decoder": {
+    "recent_workload_model": "V5_RECENT_WORKLOAD_DECODER_V1 locked source model",
+    "recent_window": 5,
+    "frozen_suffix": "last five completed appearances for each pitcher from seasons strictly before the target year",
+    "enumerated_completed_current_season_appearances": [0, 1, 2, 3, 4],
+    "hard_constraints": {
+      "current_season_completed_pitch_count_nonnegative": true,
+      "current_season_completed_success_count_between_zero_and_pitch_count": true,
+      "current_appearance_prior_pitch_count_range": [0, 140],
+      "current_appearance_prior_success_count_between_zero_and_pitch_count": true
+    },
+    "selector": {
+      "name": "frozen_history_gaussian_boundary_posterior",
+      "appearance_workload_mean_and_std": "pitcher x game_type history with pitcher then global fallback",
+      "workload_std_floor": 8.0,
+      "success_variance_floor": 4.0,
+      "current_workload_survival_floor": 0.0001,
+      "prior_over_k": "uniform",
+      "tie_break": "smaller k",
+      "no_feasible_candidate": "inactive zero-direction row"
+    },
+    "row_invariance_checks": [
+      "reverse validation-row order",
+      "duplicate one validation row",
+      "single-row versus batch equality"
+    ]
+  },
+  "diagnostic_oracle": {
+    "uses_true_previous_five_appearance pitch and success counts": true,
+    "uses_same-appearance preceding labels": true,
+    "role": "headroom_and_semantic_diagnostic_only",
+    "prediction_artifact_must_not_be_saved": true,
+    "eligible_for_expected_lb_or_submission": false
+  },
+  "source_recipe_grid": {
+    "posterior_k": [5, 10, 20, 40, 80],
+    "gamma": [0.125, 0.25, 0.5, 0.75, 1.0],
+    "direction": "boundary current-appearance posterior minus exact-C E14 season posterior",
+    "application": "one nonnegative additive component, clipped to [1e-6, 1-1e-6]",
+    "selection_order": [
+      "maximize minimum full-score gain across 2020 and 2021",
+      "maximize minimum R-score gain",
+      "maximize mean full-score gain",
+      "prefer smaller gamma then larger posterior_k"
+    ]
+  },
+  "headroom_gate": {
+    "oracle_minimum_full_gain_each_source_year": 132.11992465293324,
+    "oracle_pitcher_cluster_ci_lower_positive_each_source_year": true,
+    "on_oracle_fail": "close the axis regardless of legal proxy metrics"
+  },
+  "legal_source_gate": {
+    "minimum_full_gain_each_source_year": 50.0,
+    "minimum_R_gain_each_source_year": 0.0,
+    "minimum_F_gain_each_source_year": 0.0,
+    "pitcher_cluster_ci_lower_positive_each_source_year": true,
+    "row_invariance_required": true,
+    "on_pass": "freeze the single legal k/gamma recipe before opening 2022 and 2023",
+    "on_fail": "close direct correction; a learned feature follow-up is permitted only if the oracle headroom gate passed"
+  },
+  "completion_policy": {
+    "source_success_is_not_goal_completion": true,
+    "2024_remains_unopened_for_this_candidate": true,
+    "actual_submission_remains_manual": true,
+    "goal_completion_claimed": false
+  }
+}

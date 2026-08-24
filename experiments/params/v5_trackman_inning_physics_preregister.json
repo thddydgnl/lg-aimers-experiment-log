@@ -1,0 +1,49 @@
+{
+  "experiment_id": "V5_TRACKMAN_INNING_PHYSICS_V1",
+  "status": "locked_before_source_model_or_scores",
+  "created_at_kst": "2026-08-22",
+  "hypothesis": "A pitcher's repertoire-normalized physical movement and dispersion can change systematically across early, middle, and late innings. The current inning is public and row-local, so a completed-season pitcher-by-inning physical profile can expose transferable fatigue or role structure without current-pitch TrackMan.",
+  "legality": {
+    "official_open_data_only": true,
+    "current_or_future_trackman": false,
+    "target_used_in_profile": false,
+    "history_cutoff": "TrackMan season strictly before every modeled row season",
+    "test_aggregation_or_order": false,
+    "row_independent_inference": true,
+    "automatic_submission": false
+  },
+  "feature_recipe": {
+    "row_lookup": ["pitcher_id", "public inning band"],
+    "inning_bands": ["1-3", "4-6", "7+"],
+    "parent_cell": ["pitcher_id", "coarse pitch_type_group"],
+    "child_cell": ["pitcher_id", "inning_band", "coarse pitch_type_group"],
+    "shrinkage_k": 100.0,
+    "metrics": ["rel_speed", "spin_rate", "induced_vert_break", "horz_break", "extension", "rel_height", "rel_side", "zone_speed"],
+    "statistics": ["within-pitch-group smoothed mean delta", "total expected mean delta including mix", "within-pitch-group smoothed log sd ratio", "pitch-mix delta"],
+    "window": "all completed seasons",
+    "parent_model": "exact component C seed 2026 with identical features and hyperparameters",
+    "candidate_model": "parent_model plus only the e119 inning-physics profile"
+  },
+  "source_protocol": {
+    "model_years": [2020, 2021],
+    "selection_year": 2020,
+    "source_confirmation_year": 2021,
+    "blend_route": "R only; F remains exact-C",
+    "gamma_grid": [0.1, 0.25, 0.5, 0.75, 1.0],
+    "selection": "maximize 2020 R gain, then 2020 full gain, then smaller gamma",
+    "advance_gate": {
+      "minimum_R_gain_each_year": 50.0,
+      "minimum_full_gain_each_year": 25.0,
+      "R_pitcher_cluster_95_ci_lower_positive_each_year": true,
+      "full_pitcher_cluster_95_ci_lower_positive_each_year": true
+    },
+    "on_fail": "close before 2022-2024",
+    "on_pass": "write an immutable development lock before 2022 and 2023"
+  },
+  "completion": {
+    "source_metrics_cannot_complete_goal": true,
+    "required_robust_gain": 132.11992465293324,
+    "actual_dacon_submission_is_manual": true
+  },
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json"
+}

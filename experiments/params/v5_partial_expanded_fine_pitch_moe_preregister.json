@@ -1,0 +1,64 @@
+{
+  "experiment_id": "V5_PARTIAL_EXPANDED_FINE_PITCH_MOE_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_before_control_source_training",
+  "linkage_evidence": "experiments/results/v5_partial_trackman_linkage_source.json",
+  "selector_evidence": "experiments/results/v5_expanded_trackman_selector_source.json",
+  "hypothesis": "The locked eight-expert MoE was stable but missed its +50 source threshold with only 56% privileged fine-pitch coverage. Target-free partial game linkage raises historical fine-pitch and physical-profile coverage to roughly 80% while retaining exact-only validation diagnostics, which should reduce expert and selector variance without changing the prediction-time information set.",
+  "source_protocol": {
+    "years": [2020, 2021],
+    "parent": "exact C",
+    "route": "candidate blend on row-local R only; exact C on F",
+    "ranking": "maximize minimum R gain, then minimum full gain, then mean R gain, then smaller gamma",
+    "top_level_blend_grid": [0.1, 0.25, 0.5, 0.75, 1.0],
+    "bootstrap_iterations": 2000,
+    "gate": {
+      "minimum_R_gain_each_year": 50.0,
+      "minimum_full_gain_each_year": 0.0,
+      "R_pitcher_cluster_95_ci_lower_positive_each_year": true,
+      "full_pitcher_cluster_95_ci_lower_positive_each_year": true,
+      "selector_log_loss_improvement_positive_each_year": true,
+      "selector_top1_improvement_nonnegative_each_year": true,
+      "minimum_raw_over_augmented_expansion_factor_each_year": 1.15
+    },
+    "on_fail": "Close without reading 2022, 2023, or 2024 candidate metrics.",
+    "on_pass": "Lock gamma and run fresh 2022/2023 development folds. Open 2024 only if the full development contract passes."
+  },
+  "candidate": {
+    "model": "catboost_fine_pitch_moe",
+    "params": "experiments/params/v5_expanded_fine_pitch_moe_catboost.json",
+    "outcome_scheme": "reverse_any",
+    "fine_pitch_types": ["Fastball", "Slider", "Curveball", "ChangeUp", "Splitter", "Sinker", "Cutter", "Other"],
+    "features": ["base", "e14", "platoon", "hand_matchup", "e14_hand_cells", "e14_count_cells", "e14_type_count_cells", "trackman_rich", "batter_e14", "batter_middle_e14", "pitchmix_e14", "partial_expanded_auto_pitch_latent"],
+    "drop_features": ["pitcher_id"],
+    "partial_linkage": "locked mutual-best V5_PARTIAL_TRACKMAN_LINKAGE_V1, recomputed from outer history only",
+    "trackman_rich_source": "exact plus locked partial historical row matches",
+    "expert_features": "exact-C feature view with all e92 selector columns removed",
+    "selector_recipe": {"pitcher_k": 100.0, "pitcher_count_k": 20.0, "count_weight": 1.0, "catboost_geometric_weight": 0.5},
+    "prediction": "sum_type e92(type|row) * expert_type(success|row)",
+    "current_pitch_type_at_inference": false,
+    "current_pitch_trackman_at_inference": false,
+    "row_independent_inference": true
+  },
+  "semantic_gate": {
+    "expert_count": 8,
+    "minimum_usable_rows_per_expert": 500,
+    "e92_probability_feature_count": 8,
+    "minimum_history_auto_label_coverage_each_year": 0.75,
+    "minimum_partial_joined_row_expansion_factor": 1.4,
+    "minimum_partial_games_each_year": 100,
+    "known_exact_game_precision": 1.0,
+    "identity_minimum_purity": 0.99,
+    "training_self_pitch_subtracted": true
+  },
+  "data_contract": {
+    "official_train_and_trackman_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "unmatched_trackman_game_claimed_as_main_row": false,
+    "partial_rows_emit_exact_sequence_blocks_only": true,
+    "future_labels_or_validation_trackman": false,
+    "automatic_dacon_submission": false
+  },
+  "goal_completion_claimed": false
+}

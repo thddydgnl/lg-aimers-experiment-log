@@ -1,0 +1,56 @@
+{
+  "experiment_id": "V5_CONTEXTUAL_PRIVILEGED_MARGINALIZATION_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_before_control_evaluation",
+  "signal_source": "experiments/results/v5_contextual_privileged_marginalization_signal_source.json",
+  "frozen_parent": {
+    "name": "exact_C",
+    "model_key": "catboost_outcome",
+    "artifacts": {
+      "2020": "experiments/results/predictions/v4_m3_c_backtest_2020_2020.npz",
+      "2021": "experiments/results/predictions/v4_m3_c_backtest_2021_2021.npz"
+    }
+  },
+  "directions": {
+    "integrated_full": "blend exact-C toward the full-context privileged teacher marginalized over historical repertoire",
+    "integrated_control": "blend exact-C toward the same teacher without eight physics fields",
+    "physics_delta": "add marginalized full-minus-control physics contribution to exact-C"
+  },
+  "gamma_grid": [0.1, 0.25, 0.5, 0.75, 1.0],
+  "routing": "Apply selected direction on R only; preserve exact-C on F.",
+  "selection_order": [
+    "maximum minimum R gain across 2020/2021",
+    "maximum minimum full gain",
+    "maximum mean R gain",
+    "smaller gamma",
+    "integrated_full then integrated_control then physics_delta on exact tie"
+  ],
+  "source_protocol": {
+    "years": [2020, 2021],
+    "years_forbidden_until_pass": [2022, 2023, 2024],
+    "bootstrap_iterations": 2000,
+    "gate": {
+      "minimum_R_gain_each_year": 25.0,
+      "minimum_full_gain_each_year": 25.0,
+      "R_pitcher_cluster_95_ci_lower_strictly_positive_each_year": true,
+      "full_pitcher_cluster_95_ci_lower_strictly_positive_each_year": true,
+      "native_pitcher_R_point_gain_nonnegative_each_year": true,
+      "fallback_R_point_gain_nonnegative_each_year": true
+    }
+  },
+  "semantic_gate": {
+    "signal_source_status": "source_pass",
+    "signal_source_downstream_control_metrics_read": false,
+    "row_alignment_exact": true,
+    "current_validation_trackman_used": false,
+    "validation_labels_used_to_construct_signal": false
+  },
+  "advance_rule": "Freeze one direction/gamma only if all source gates pass. Otherwise close without generating a 2022+ candidate.",
+  "data_contract": {
+    "official_data_only": true,
+    "test_rows_read": false,
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "goal_completion_claimed": false
+}

@@ -1,0 +1,93 @@
+{
+  "experiment_id": "V5_POSTBREAK_F_LOGISTIC_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_after_source_pass_and_before_2024_candidate_fit_or_metric",
+  "validation_basis": {
+    "base_contract": "experiments/params/v5_validation_contract_v2.json",
+    "F_rule": "V2 explicitly permits a separately preregistered post-break F recipe. Seasons through 2022 and every R row are preserved bit-for-bit, so their zero delta is an invariance requirement rather than evidence against a post-break-only recipe.",
+    "anti_false_completion": "The 1190 threshold, actual V3 anchor, 0.75 haircut, three-anchor 2024 point and pitcher-cluster CI thresholds, complexity cap, package gates, and manual-only submission are unchanged.",
+    "relevant_development": "Three strictly forward month blocks inside the first post-break season 2023, followed by a single locked one-year-ahead 2024 confirmation."
+  },
+  "source_report": "experiments/results/v5_postbreak_f_logistic_source.json",
+  "source_summary": {
+    "selected_view": "core",
+    "selected_C": 0.001,
+    "selected_gamma": 1.0,
+    "minimum_forward_block_F_gain": 14943.638228246513,
+    "combined_forward_OOF_F_gain": 15747.98396645748,
+    "minimum_2023_full_point_or_ci_lower_gain_over_three_anchors": 969.0200354087766
+  },
+  "selected_recipe": {
+    "feature_view": "core",
+    "feature_columns": [
+      "logit_exact_c",
+      "current_posterior_k50",
+      "current_posterior_minus_exact_c",
+      "current_reliability_k50",
+      "log1p_current_n",
+      "prev1_success",
+      "prev3_success",
+      "prev5_success",
+      "recent_success_mean",
+      "recent_success_std"
+    ],
+    "current_season_posterior_k": 50.0,
+    "model": "median imputer + StandardScaler + sklearn LogisticRegression L2/lbfgs",
+    "C": 0.001,
+    "max_iter": 1000,
+    "random_state": 2026,
+    "gamma": 1.0,
+    "training_rows": "all 2023 F rows",
+    "confirmation_rows": "all 2024 rows",
+    "R_formula": "exact-C bit-identical",
+    "F_formula": "selected logistic component because gamma=1.0",
+    "clipping": [0.000001, 0.999999]
+  },
+  "immutable_inputs": [
+    {
+      "path": "experiments/params/v5_postbreak_f_logistic_preregister.json",
+      "sha256": "B214B8F2237F8EE9C36F0EFF8B24744598DB3890DDD4D81CAFA069B670204200"
+    },
+    {
+      "path": "experiments/analyze_v5_postbreak_f_logistic_source.py",
+      "sha256": "6D9608E3F99885A36455FB5FDE685AFE239B678B3E381B0BF34E1C895834C324"
+    },
+    {
+      "path": "experiments/results/v5_postbreak_f_logistic_source.json",
+      "sha256": "319020C6EE2C86DF3B773E2B8E597889FA221B8DA2B7DA381BD01D62BB468478"
+    },
+    {
+      "path": "experiments/results/predictions/v5_postbreak_f_logistic_source_2023.npz",
+      "sha256": "DE3B6C4AA69DA911512EB12ADF1C90E298A2DDAEF76C528D0F1F69ADB5E3F67A"
+    },
+    {
+      "path": "experiments/analyze_v5_postbreak_f_logistic_confirmation.py",
+      "sha256": "D928866B66A4D33563FC6FFD1E416241194102949BFAD66789B3BA3BB738A2F1"
+    }
+  ],
+  "actual_v3_anchor": 1090.9100565103,
+  "haircut": 0.75,
+  "required_raw_gain": 132.11992465293324,
+  "confirmation_gate": {
+    "single_locked_2024_run": true,
+    "R_prediction_bit_identity": true,
+    "F_same_parent_point_and_pitcher_cluster_ci_lower_gain_strictly_positive": true,
+    "full_point_and_pitcher_cluster_ci_lower_gain_over_exact_C_and_both_honest_anchors_strictly_above": 132.11992465293324,
+    "conservative_expected_score_strictly_above": 1190.0,
+    "no_recipe_change_after_open": true
+  },
+  "complexity": {
+    "single_routed_recipe": true,
+    "outer_components": 2,
+    "outer_weights_nonnegative": true,
+    "signed_residual_stack": false,
+    "same_confirmation_fold_fit": false
+  },
+  "package_if_passes": {
+    "fit_F_component": "all 2024 F rows using their out-of-time exact-C parent, then deploy to 2025 F",
+    "R": "full-refit exact-C unchanged",
+    "sample_parity_invariance_245789_time_ram_sha_required": true,
+    "actual_submission": "manual only"
+  },
+  "goal_completion_claimed": false
+}

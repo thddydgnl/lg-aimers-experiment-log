@@ -1,0 +1,74 @@
+{
+  "experiment_id": "V5_BATTER_TRACKMAN_PITCH_SELECTOR_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_before_source_training_or_metrics",
+  "hypothesis": "The dense current-pitch-group oracle has goal-scale control headroom, while the deployable selector remains the bottleneck. Completed-season target-free batter TrackMan approach profiles can improve which coarse group a pitcher selects against a specific batter, even though those profiles did not improve the unconditional exact-C control model.",
+  "relationship_to_prior_work": {
+    "dense_pitchtype_moe": "Keeps its counter-derived historical group labels, selector model, pitch-group experts and row-local pitchmix state unchanged.",
+    "batter_trackman_rich": "Reuses the already audited 42 target-free, strict-cutoff batter profile features; the failed direct-control use is not retuned.",
+    "new_structure": "The 42 batter TrackMan columns are visible only to the coarse pitch selector and are explicitly removed from every control-outcome expert."
+  },
+  "data_contract": {
+    "official_train_and_trackman_only": true,
+    "external_data_or_api": false,
+    "source_validation_seasons": [2020, 2021],
+    "development_and_confirmation_unopened": [2022, 2023, 2024],
+    "current_pitch_group_at_inference": false,
+    "other_validation_or_test_rows_at_inference": false,
+    "test_aggregation_or_order": false,
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "locked_model": {
+    "parent_architecture": "V5_DENSE_PITCHTYPE_MOE_V1",
+    "parent_features": [
+      "base",
+      "e14",
+      "platoon",
+      "hand_matchup",
+      "e14_hand_cells",
+      "e14_count_cells",
+      "e14_type_count_cells",
+      "trackman_rich",
+      "batter_e14",
+      "batter_middle_e14",
+      "pitchmix_e14"
+    ],
+    "added_feature_family": "trackman_batter_rich",
+    "selector_only_prefixes": ["e101_", "e102_", "e103_"],
+    "selector": {
+      "model": "CatBoost MultiClass",
+      "iterations": 400,
+      "depth": 7,
+      "learning_rate": 0.05,
+      "l2_leaf_reg": 12.0,
+      "seed": 9326
+    },
+    "control_experts": "Exact parent feature view and fixed exact-C 500-tree outcome parameters; all e101/e102/e103 columns excluded.",
+    "routing": "Candidate affects R only; F remains exact-C parent."
+  },
+  "source_selection": {
+    "outer_blend": "(1-gamma)*exact_C + gamma*batter_selector_dense_MoE on R",
+    "gamma_grid": [0.25, 0.5, 0.75, 1.0],
+    "ranking": "maximize minimum full gain, then minimum R gain, then mean full gain, then smaller gamma",
+    "selector_proxy_requirement": {
+      "minimum_log_loss_improvement_vs_immutable_dense_selector_each_year": 0.001,
+      "minimum_top1_accuracy_change_each_year": 0.0
+    },
+    "control_gate": {
+      "minimum_full_gain_each_year": 25.0,
+      "minimum_R_gain_each_year": 25.0,
+      "pitcher_cluster_95_ci_lower_positive_each_year": true
+    },
+    "on_fail": "Close this selector-only batter axis without reading 2022+ labels.",
+    "on_pass": "Freeze gamma and every model/feature parameter before 2022 and 2023 development."
+  },
+  "complexity_contract": {
+    "components": ["exact_C", "batter_selector_dense_MoE"],
+    "component_count": 2,
+    "outer_weights_nonnegative_sum_one": true,
+    "signed_residual_stack": false
+  },
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json",
+  "goal_completion_claimed": false
+}

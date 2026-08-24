@@ -1,0 +1,58 @@
+{
+  "experiment_id": "V5_HIERARCHICAL_FAILURE_CHAIN_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "preregistered_before_source_metrics",
+  "hypothesis": "The exact-C reverse_any multiclass objective may spend capacity separating failure modes without enforcing a coherent success probability. A fixed conditional failure chain can learn the same mutually exclusive auxiliary labels with three binary tasks and obtain P(success) as a probability product.",
+  "relationship_to_prior_failure_decomposition": {
+    "prior": "V4 catboost_failure_decomp independently predicted overlapping component15 reverse/middle/wayoff indicators and clipped 1 minus their sum.",
+    "structural_difference": "This experiment uses mutually exclusive reverse_any classes, trains each later task only conditional on earlier failures not occurring, and multiplies conditional survival probabilities. No overlapping probabilities are subtracted.",
+    "prior_candidate_reused": false
+  },
+  "data_contract": {
+    "official_train_and_official_trackman_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "source_validation_seasons": [2020, 2021],
+    "latest_control_label_season_used_for_source_metrics": 2021,
+    "history_rule": "season strictly before validation season",
+    "auxiliary_label_rule": "next same-pitcher official as-of counter deltas inside completed history only",
+    "validation_auxiliary_labels_used_as_features": false,
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "parent": {
+    "recipe": "exact component C",
+    "outcome_scheme": "reverse_any",
+    "random_seed": 2026
+  },
+  "candidate": {
+    "chain_order": ["reverse", "middle", "wide", "success"],
+    "models": [
+      "P(reverse)",
+      "P(middle | not reverse)",
+      "P(wide | not reverse and not middle)"
+    ],
+    "formula": "P(success) = (1-P(reverse)) * (1-P(middle|not reverse)) * (1-P(wide|not reverse,not middle))",
+    "feature_recipe": "exact component C, unchanged",
+    "catboost": {
+      "loss_function": "Logloss",
+      "iterations": 500,
+      "depth": 6,
+      "learning_rate": 0.05,
+      "l2_leaf_reg": 12.0,
+      "random_seed": 2026
+    },
+    "blend_or_calibration": "none",
+    "selection": "none"
+  },
+  "source_gate": {
+    "minimum_full_gain_each_year": 25.0,
+    "minimum_r_gain_each_year": 25.0,
+    "pitcher_cluster_95_ci_lower_positive_full_each_year": true,
+    "pitcher_cluster_95_ci_lower_positive_r_each_year": true,
+    "on_fail": "Close H4 without reading 2022+ candidate labels.",
+    "on_pass": "Freeze chain and train 2022/2023 before any 2024 candidate run."
+  },
+  "bootstrap_iterations": 1000,
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json"
+}

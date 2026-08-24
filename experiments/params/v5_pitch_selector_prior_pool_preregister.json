@@ -1,0 +1,42 @@
+{
+  "experiment_id": "V5_PITCH_SELECTOR_PRIOR_POOL_V1",
+  "created_before_selector_backtest_and_before_2022_control_target_evaluation": true,
+  "hypothesis": "The deployable pitch-type MoE is bottlenecked by temporal class-prior drift in its selector. The row's official as-of pitcher pitch-mix is a legal row-local prior; pooling it with the context CatBoost probabilities can improve marginalization without current-pitch TrackMan.",
+  "official_data_only": true,
+  "external_data": false,
+  "test_rows_read": false,
+  "row_independent": true,
+  "selection_labels": "historical official pitch_type_group only; control_success is not read during selector selection",
+  "selection_years": [2020, 2021],
+  "locked_before_control_target_year": 2022,
+  "selector_inputs": {
+    "context_probability": "the same e22_cat CatBoost trained on matched seasons strictly before each query season",
+    "row_prior": [
+      "asof_pitcher_pitchmix_n",
+      "asof_pitcher_fastball_rate",
+      "asof_pitcher_breaking_rate",
+      "asof_pitcher_offspeed_rate",
+      "other = max(0, 1 - supplied three rates)"
+    ],
+    "fallback": "matched source-history group frequency"
+  },
+  "candidate_grid": {
+    "prior_k": [0.0, 20.0, 100.0],
+    "pool": ["linear", "geometric"],
+    "catboost_weight_alpha": [0.0, 0.25, 0.5, 0.75, 1.0]
+  },
+  "selection_rule": "minimize the worst multiclass log loss across 2020 and 2021; break ties by mean log loss, then lexical candidate id",
+  "deployment_contract": {
+    "current_pitch_type_used": false,
+    "test_row_aggregates_used": false,
+    "candidate_probability": "sum_g pooled_selector_probability(g|row) * frozen_group_expert_probability(success|g,row)"
+  },
+  "source_stage_2022": "v5_pitchtype_moe_c_dev22",
+  "source_candidate_key": "catboost_pitchtype_moe",
+  "materialized_stage_2022": "v5_pitch_selector_moe_locked",
+  "materialized_candidate_key": "pitchtype_moe_selector",
+  "goal_gamma_grid": [0.05, 0.1, 0.2, 0.35, 0.5, 0.75, 1.0],
+  "early_2022_required_full_point_gain": 132.11992465,
+  "diagnostic_2022_pitch_group_metrics_excluded_from_selection": true,
+  "confirmation_year_2024_must_remain_closed_until_2022_and_2023_goal_gates_pass": true
+}

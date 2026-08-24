@@ -1,0 +1,48 @@
+{
+  "experiment_id": "V5_RECENT_GAME_F_UPDATE_SOURCE_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "preregistered_before_recent_game_F_metrics",
+  "hypothesis": "For F rows, the official previous-game success rates are game-type-local often enough to avoid the R-to-F contamination found in the all-season cumulative counter. Decoding their shared success/middle denominator permits a row-local Bayesian update that can follow the documented F measurement-regime shift.",
+  "data_contract": {
+    "official_open_data_only": true,
+    "source_years": [2020, 2021],
+    "years_forbidden_during_source": [2022, 2023, 2024],
+    "test_rows_read": false,
+    "other_evaluation_rows_at_inference": false,
+    "row_independent": true,
+    "external_data_or_api": false,
+    "automatic_dacon_submission": false
+  },
+  "parent": "exact C",
+  "decoder": {
+    "horizons": [1, 3, 5],
+    "maximum_denominator": {"1": 200, "3": 500, "5": 900},
+    "rounding_tolerance": 5.1e-7,
+    "workload": "LCM of the reduced denominators of official previous-N-game success and middle rates",
+    "boundary_zero_or_one": "denominator lower bound 1",
+    "invalid": "retain parent"
+  },
+  "formula": "on F only, (decoded_successes + k * parent) / (decoded_n + k); R remains parent",
+  "k_grid": [10.0, 20.0, 50.0, 100.0, 200.0, 500.0],
+  "source_selection": {
+    "ranking": [
+      "maximum minimum F score gain across 2020 and 2021",
+      "maximum minimum full score gain",
+      "maximum mean F score gain",
+      "larger k",
+      "shorter horizon"
+    ],
+    "bootstrap_iterations": 2000,
+    "gate": {
+      "minimum_F_gain_each_year": 100.0,
+      "minimum_full_gain_each_year": 10.0,
+      "F_pitcher_cluster_95_ci_lower_strictly_positive": true,
+      "full_pitcher_cluster_95_ci_lower_strictly_positive": true,
+      "decoded_coverage_each_year_at_least": 0.9
+    },
+    "on_fail": "close without reading 2022+",
+    "on_pass": "freeze horizon and k as an F route before any 2022/2023 evaluation"
+  },
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json",
+  "goal_completion_claimed": false
+}

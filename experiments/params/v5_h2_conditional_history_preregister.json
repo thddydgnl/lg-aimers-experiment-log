@@ -1,0 +1,81 @@
+{
+  "experiment_id": "V5_H2_CONDITIONAL_HISTORY",
+  "created_at_kst": "2026-08-21",
+  "hypothesis": "Completed-season pitcher and batter command tendencies conditioned on count, game type, and opponent hand contain stable row-local signal not represented by the V3 C recipe.",
+  "official_data_only": true,
+  "test_rows_read": false,
+  "row_independent_inference": true,
+  "anchor": {
+    "stem": "v3_sparse_m3_frozen",
+    "key": "final_prediction",
+    "actual_lb": 1090.9100565103
+  },
+  "fixed_model_recipe": {
+    "model": "catboost_outcome",
+    "outcome_scheme": "reverse_any",
+    "params": "experiments/params/v3_outcome_seed2026.json",
+    "base_features": [
+      "base",
+      "e14",
+      "platoon",
+      "hand_matchup",
+      "e14_hand_cells",
+      "e14_count_cells",
+      "e14_type_count_cells",
+      "trackman_rich",
+      "batter_e14",
+      "batter_middle_e14"
+    ],
+    "e14_k": 50.0,
+    "k_pitcher": 50.0,
+    "k_platoon": 50.0,
+    "batter_e14_k": 80.0,
+    "batter_middle_k": 100.0,
+    "history_group_k": 500.0,
+    "history_group_window": null,
+    "drop_features": "same frozen V3 C overall-Trackman drop list plus pitcher_id",
+    "random_seed": 2026
+  },
+  "variants": {
+    "pitcher": {
+      "extra_features": [
+        "history_pitcher_type_count_rate",
+        "history_pitcher_batterhand_count_rate"
+      ],
+      "development_stem": "v5_h2_hist_pitcher_dev2223",
+      "confirmation_stem": "v5_h2_hist_pitcher_confirm24"
+    },
+    "batter": {
+      "extra_features": [
+        "history_batter_count_rate",
+        "history_batter_pitcherhand_count_rate"
+      ],
+      "development_stem": "v5_h2_hist_batter_dev2223",
+      "confirmation_stem": "v5_h2_hist_batter_confirm24"
+    },
+    "joint": {
+      "extra_features": [
+        "history_pitcher_type_count_rate",
+        "history_pitcher_batterhand_count_rate",
+        "history_batter_count_rate",
+        "history_batter_pitcherhand_count_rate"
+      ],
+      "development_stem": "v5_h2_hist_joint_dev2223",
+      "confirmation_stem": "v5_h2_hist_joint_confirm24"
+    }
+  },
+  "selection": {
+    "development_years": [2022, 2023],
+    "confirmation_year": 2024,
+    "route": "R_only_F_unchanged",
+    "gamma_grid": [0.25, 0.5, 0.75, 1.0],
+    "eligibility": "positive R gain in both development years and pitcher-cluster 95% R gain lower bound above zero in both years",
+    "ranking": "largest minimum R gain, then smaller gamma, then variant name"
+  },
+  "confirmation": {
+    "no_retuning": true,
+    "g_robust": "min(median development full gain, 2024 full gain, 2024 pitcher-cluster 95% full-gain lower bound)",
+    "expected_lb_lower": "1090.9100565103 + 0.75 * max(0, g_robust)",
+    "goal_pass": "expected_lb_lower > 1190 or actual DACON LB > 1190"
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "experiment_id": "V5_PRIVILEGED_PHYSICS_DELTA_STUDENT_V1",
+  "created_before_any_new_student_prediction": true,
+  "hypothesis": "The out-of-time physics teacher advantage over its matched control teacher isolates privileged physical information. Regressing only that centered advantage from legal history features should recover predictable repertoire-level physics while avoiding the calibration and duplicate-control signal that harmed the prior full-probability soft student.",
+  "relation_to_prior_failures": {
+    "profile_distillation": "The prior E80 experiment aggregated teacher values into nine fixed tables and appended them to the outcome model; this model directly learns the per-pitch teacher advantage.",
+    "soft_student": "The prior soft student imitated the centered full physics-teacher probability and therefore duplicated its weaker control model; this student targets physics_teacher minus control_teacher only and is added to exact C as a residual."
+  },
+  "official_data_only": true,
+  "external_data": false,
+  "test_rows_read": false,
+  "row_independent": true,
+  "privileged_training_contract": {
+    "source": "v5_trackman_physics_soft_teacher outer-time artifacts",
+    "teacher_target": "0.5 + (physics_teacher - control_teacher) centered within each completed source season",
+    "source_season_control_success_used_for_student_fit": false,
+    "current_or_validation_trackman_at_inference": false,
+    "permitted_role": "historical LUPI target only"
+  },
+  "student_recipe": {
+    "model": "CatBoost RMSE regressor",
+    "params": "experiments/params/v5_physics_delta_student.json",
+    "features": [
+      "base",
+      "e14",
+      "platoon",
+      "hand_matchup",
+      "e14_hand_cells",
+      "e14_count_cells",
+      "e14_type_count_cells",
+      "trackman_rich",
+      "trackman_stability",
+      "batter_e14",
+      "batter_middle_e14",
+      "current_state_context",
+      "current_state_level"
+    ],
+    "fit_game_types": ["R"],
+    "retain_pitcher_id_and_group_trackman_profiles": true,
+    "fixed_hyperparameters": {
+      "e14_k": 50,
+      "pitcher_k": 50,
+      "platoon_k": 50,
+      "batter_e14_k": 80,
+      "batter_middle_k": 100,
+      "inner_validation": "none"
+    }
+  },
+  "stages": {
+    "2022": "v5_physics_delta_student_dev22",
+    "2023": "v5_physics_delta_student_dev23",
+    "2024": "v5_physics_delta_student_confirm24"
+  },
+  "teacher_years": {
+    "2022": [2020, 2021],
+    "2023": [2020, 2021, 2022],
+    "2024": [2020, 2021, 2022, 2023]
+  },
+  "candidate_key": "catboost_teacher",
+  "candidate_formula_on_R": "exact_parent_C + gamma * (catboost_teacher - 0.5)",
+  "candidate_formula_on_F": "exact_parent_C unchanged",
+  "selection": {
+    "development_years": [2022, 2023],
+    "gamma_grid": [0.1, 0.25, 0.5, 0.75, 1.0, 1.5],
+    "comparison_anchors": ["exact_parent_C", "honest_r_identity", "honest_r_grid"],
+    "early_2022_required_full_point_gain": 132.11992465,
+    "locked_rule": "maximize minimum full-score gain across both development years and all anchors among trials with positive R point gain and positive pitcher-cluster R CI lower bound in every cell"
+  },
+  "confirmation": {
+    "year": 2024,
+    "read_only_after_locked_selection": true,
+    "completion_formula": "1090.9100565103 + 0.75 * max(0, min(G_dev_full, G_confirm_full, G_confirm_full_ci_low))",
+    "required_expected_score_strictly_greater_than": 1190.0
+  }
+}

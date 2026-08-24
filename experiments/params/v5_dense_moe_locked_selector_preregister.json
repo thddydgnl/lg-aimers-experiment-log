@@ -1,0 +1,51 @@
+{
+  "experiment_id": "V5_DENSE_MOE_LOCKED_SELECTOR_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "preregistered_before_combined_control_metrics",
+  "hypothesis": "Dense full outcome experts transferred positively with a newly trained selector but narrowly missed the source threshold. The independently frozen row-local selector was selected only by pitch-group log-loss before any dense-expert control metric and may provide better mixture weights for those same immutable experts.",
+  "frozen_inputs": {
+    "experts": "V5_DENSE_PITCHTYPE_MOE_V1 source artifacts; no expert retraining or refit",
+    "selector_recipe_source": "experiments/results/v5_row_local_pitchmix_selector_source.json",
+    "selector_selection_used_control_success": false,
+    "selector": {
+      "state_k": 20,
+      "context_variant": "pitcher_hand_count",
+      "context_k": 20,
+      "tilt_lambda": 1.0,
+      "state_catboost_weight": 0.75,
+      "catboost": "400 trees, depth 6, learning_rate 0.06, l2 20; BASE_FEATURES plus frozen row-local state features"
+    }
+  },
+  "data_contract": {
+    "official_train_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "source_validation_seasons": [2020, 2021],
+    "latest_control_label_season_used_for_source_metrics": 2021,
+    "history_rule": "season strictly before validation season",
+    "current_pitch_group_at_inference": false,
+    "other_validation_or_test_rows_at_inference": false,
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "candidate": {
+    "groups": ["fastball", "breaking", "offspeed"],
+    "soft_prediction": "sum_g locked_selector_probability_g * immutable_dense_expert_probability_g",
+    "top_level_blend_grid": [0.25, 0.5, 0.75, 1.0],
+    "blend_formula": "F rows remain exact parent; on R, parent + gamma * (locked-selector dense-MoE - parent)",
+    "selection": "maximize minimum full gain across 2020/2021, then minimum R gain, then smaller gamma"
+  },
+  "reproduction_gate": {
+    "maximum_absolute_selector_log_loss_difference_from_frozen_report": 0.000005
+  },
+  "source_gate": {
+    "minimum_full_gain_each_year": 25.0,
+    "minimum_r_gain_each_year": 25.0,
+    "pitcher_cluster_95_ci_lower_positive_full_each_year": true,
+    "pitcher_cluster_95_ci_lower_positive_r_each_year": true,
+    "on_fail": "Close without reading 2022+ candidate labels.",
+    "on_pass": "Freeze gamma and recipe before 2022/2023; do not open 2024 until both development folds and both honest anchors pass."
+  },
+  "bootstrap_iterations": 1000,
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json"
+}

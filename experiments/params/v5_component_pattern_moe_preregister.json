@@ -1,0 +1,61 @@
+{
+  "experiment_id": "V5_COMPONENT_PATTERN_MOE_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "preregistered_before_source_metrics",
+  "hypothesis": "Control success is structurally impossible whenever reverse or middle increments. A coherent factorization should first estimate the 12 observed reverse/middle/ball/strike patterns, then estimate success only inside the three r0m0 call patterns and marginalize those conditional experts.",
+  "relationship_to_prior_work": {
+    "failure_decomposition": "Prior independent reverse/middle/wayoff probabilities overlapped and were clipped after subtraction.",
+    "failure_chain": "Prior chain used the coarse reverse_any taxonomy and multiplied sequential binary survivals without modelling ball/strike patterns.",
+    "component15": "Prior component15 classifier fragmented each pattern into success/failure joint classes. This recipe shares a pattern gate and fits only three well-populated conditional success experts."
+  },
+  "data_contract": {
+    "official_train_and_official_trackman_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "source_validation_seasons": [2020, 2021],
+    "history_rule": "season strictly before validation season",
+    "component_pattern_labels": "next same-pitcher official reverse/middle/ball/strike counter increments inside completed history only",
+    "current_validation_pattern_used": false,
+    "other_validation_or_test_rows_at_inference": false,
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "candidate": {
+    "pattern_classes": [
+      "r0m0b0s0", "r0m0b0s1", "r0m0b1s0",
+      "r0m1b0s0", "r0m1b0s1", "r0m1b1s0",
+      "r1m0b0s0", "r1m0b0s1", "r1m0b1s0",
+      "r1m1b0s0", "r1m1b0s1", "r1m1b1s0"
+    ],
+    "success_eligible_patterns": ["r0m0b0s0", "r0m0b0s1", "r0m0b1s0"],
+    "prediction_formula": "sum over eligible patterns of P(pattern|x) * P(success|pattern,x)",
+    "features": "exact-C common features plus row-local e53 K20 pitchmix and completed-history e58 physics profiles",
+    "catboost": {
+      "iterations": 500,
+      "depth": 6,
+      "learning_rate": 0.05,
+      "l2_leaf_reg": 12.0,
+      "random_seed": 2026,
+      "component_expert_seed_offset": 9100
+    },
+    "top_level_blend_grid": [0.25, 0.5, 0.75, 1.0],
+    "blend_formula": "parent_exact_C + gamma * (component_pattern_moe - parent_exact_C)",
+    "route": "all rows",
+    "selection": "maximize minimum full gain across 2020/2021, then minimum R gain, then smaller gamma"
+  },
+  "semantic_gate": {
+    "minimum_history_pattern_coverage_each_year": 0.995,
+    "exact_pattern_class_count": 12,
+    "minimum_rows_per_success_expert": 10000
+  },
+  "source_gate": {
+    "minimum_full_gain_each_year": 25.0,
+    "minimum_r_gain_each_year": 25.0,
+    "pitcher_cluster_95_ci_lower_positive_full_each_year": true,
+    "pitcher_cluster_95_ci_lower_positive_r_each_year": true,
+    "on_fail": "Close without reading 2022+ candidate labels.",
+    "on_pass": "Freeze gamma and recipe before 2022/2023; open 2024 only after the locked development contract passes."
+  },
+  "bootstrap_iterations": 2000,
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json"
+}

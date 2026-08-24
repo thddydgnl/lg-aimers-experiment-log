@@ -1,0 +1,54 @@
+{
+  "experiment_id": "V5_DIRECT_TEACHER_INTEGRATION_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_before_control_evaluation",
+  "signal_source": "experiments/results/v5_direct_teacher_signal_v2_source.json",
+  "frozen_parent": {
+    "name": "exact_C",
+    "model_key": "catboost_outcome",
+    "artifacts": {
+      "2020": "experiments/results/predictions/v4_m3_c_backtest_2020_2020.npz",
+      "2021": "experiments/results/predictions/v4_m3_c_backtest_2021_2021.npz"
+    }
+  },
+  "candidate": {
+    "signals": ["all", "recent", "context"],
+    "gamma_grid": [0.1, 0.25, 0.5, 0.75, 1.0],
+    "formula": "On R only, clip(exact_C + gamma * selected historical expected-physics signal); preserve exact_C on F.",
+    "selection_order": [
+      "maximum minimum R gain across 2020/2021",
+      "maximum minimum full gain",
+      "maximum mean R gain",
+      "smaller gamma",
+      "all then recent then context on an exact numerical tie"
+    ]
+  },
+  "source_protocol": {
+    "years": [2020, 2021],
+    "years_forbidden_until_pass": [2022, 2023, 2024],
+    "bootstrap_iterations": 2000,
+    "gate": {
+      "minimum_R_gain_each_year": 25.0,
+      "minimum_full_gain_each_year": 25.0,
+      "R_pitcher_cluster_95_ci_lower_strictly_positive_each_year": true,
+      "full_pitcher_cluster_95_ci_lower_strictly_positive_each_year": true,
+      "native_pitcher_R_point_gain_nonnegative_each_year": true,
+      "fallback_pitcher_R_point_gain_nonnegative_each_year": true
+    }
+  },
+  "semantic_gate": {
+    "signal_source_status": "source_pass",
+    "signal_source_downstream_control_metrics_read": false,
+    "row_alignment_exact": true,
+    "current_validation_trackman_used": false,
+    "validation_target_used_to_construct_signal": false
+  },
+  "advance_rule": "Freeze one signal and gamma only if all source point, cluster-CI, native, and fallback gates pass; otherwise close without reading 2022+ candidate metrics.",
+  "data_contract": {
+    "official_data_only": true,
+    "test_rows_read": false,
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "goal_completion_claimed": false
+}

@@ -1,0 +1,85 @@
+{
+  "experiment_id": "V5_EXPECTANCY_STATE_LOOKUP_V1",
+  "status": "locked_before_source_metrics",
+  "locked_at_kst": "2026-08-22",
+  "hypothesis": "The official win-expectancy and leverage columns are low-cardinality lookup values, not truly continuous measurements. A completed-history nested empirical-Bayes table can recover stable, non-monotone pre-pitch state effects that numeric CatBoost splits may miss.",
+  "legality": {
+    "official_open_train_only": true,
+    "historical_labels_only": true,
+    "validation_or_test_aggregation": false,
+    "row_independent_inference": true,
+    "external_data_or_api": false,
+    "row_id_or_file_order_feature": false
+  },
+  "parent": {
+    "recipe": "exact-C catboost_outcome",
+    "route": "R only; F remains exact-C",
+    "source_artifacts": {
+      "2020": "experiments/results/predictions/v4_m3_c_backtest_2020_2020.npz",
+      "2021": "experiments/results/predictions/v4_m3_c_backtest_2021_2021.npz"
+    }
+  },
+  "source_protocol": {
+    "years": [2020, 2021],
+    "raw_train_rows_read_through": 2021,
+    "later_years_read": false,
+    "history_for_target_year": "all R rows with season strictly below target year",
+    "direction": "nested child posterior minus nested parent posterior",
+    "parent_strength": 1000.0,
+    "child_strength_grid": [25.0, 50.0, 100.0, 250.0, 500.0, 1000.0, 2500.0],
+    "gamma_grid": [0.25, 0.5, 1.0],
+    "specifications": {
+      "home_we_given_count": {
+        "parent": ["balls_before", "strikes_before"],
+        "child": ["balls_before", "strikes_before", "home_win_expectancy"]
+      },
+      "away_we_given_count": {
+        "parent": ["balls_before", "strikes_before"],
+        "child": ["balls_before", "strikes_before", "away_win_expectancy"]
+      },
+      "li_given_count": {
+        "parent": ["balls_before", "strikes_before"],
+        "child": ["balls_before", "strikes_before", "li"]
+      },
+      "home_we_given_state": {
+        "parent": ["balls_before", "strikes_before", "outs_before", "base_state", "inning_bucket"],
+        "child": ["balls_before", "strikes_before", "outs_before", "base_state", "inning_bucket", "home_win_expectancy"]
+      },
+      "li_given_state": {
+        "parent": ["balls_before", "strikes_before", "outs_before", "base_state", "inning_bucket"],
+        "child": ["balls_before", "strikes_before", "outs_before", "base_state", "inning_bucket", "li"]
+      },
+      "joint_we_li_given_count": {
+        "parent": ["balls_before", "strikes_before"],
+        "child": ["balls_before", "strikes_before", "home_win_expectancy", "li"]
+      },
+      "score_state_given_count": {
+        "parent": ["balls_before", "strikes_before"],
+        "child": ["balls_before", "strikes_before", "inning_bucket", "score_diff_bucket", "base_state", "outs_before"]
+      }
+    },
+    "selection_order": [
+      "maximize minimum full-score gain across 2020 and 2021",
+      "maximize minimum R-score gain",
+      "maximize mean full-score gain",
+      "prefer smaller gamma, then larger child strength, then specification name"
+    ],
+    "advance_gate": {
+      "minimum_full_gain_each_year": 30.0,
+      "minimum_R_gain_each_year": 30.0,
+      "full_pitcher_cluster_95_ci_low_each_year": 0.0,
+      "R_pitcher_cluster_95_ci_low_each_year": 0.0
+    }
+  },
+  "development_if_source_passes": {
+    "years": [2022, 2023],
+    "recipe_locked_from_source": true,
+    "required_comparisons": ["exact-C", "honest identity", "honest grid"],
+    "2024_unopened_until_development_pass": true
+  },
+  "completion": {
+    "source_or_development_cannot_complete_goal": true,
+    "validation_contract": "experiments/params/v5_validation_contract_v2.json",
+    "actual_submission_manual": true
+  }
+}

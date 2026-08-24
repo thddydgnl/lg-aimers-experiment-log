@@ -1,0 +1,100 @@
+{
+  "experiment_id": "V5_TABICLV2_TRANSFER_V1",
+  "created_before_any_official_tabicl_target_prediction": true,
+  "created_after_synthetic_environment_smoke_only": true,
+  "hypothesis": "A synthetic-pretrained tabular in-context learner can recover nonlinear structure that the exact-C CatBoost outcome model misses. A heavily source-fold-calibrated, nonnegative two-model blend may transfer across seasons without the signed same-fold meta-fit that invalidated V4.",
+  "rule_boundary": {
+    "official_open_data_only_for_downstream_context_and_features": true,
+    "pretrained_checkpoint_training_data": "millions of synthetic datasets according to the official TabICLv2 documentation",
+    "checkpoint_license": "BSD-3-Clause",
+    "external_baseball_or_target_data": false,
+    "current_pitch_trackman": false,
+    "test_row_aggregation": false,
+    "other_test_rows_used_as_keys_values_or_padding": false,
+    "direct_variable_query_length_api": "prohibited",
+    "fixed_padding_source": "first selected frozen historical training feature row",
+    "empirical_invariance_report": "results/v5_tabicl_environment_smoke.json"
+  },
+  "checkpoint": {
+    "package": "tabicl==2.1.1",
+    "version": "tabicl-classifier-v2-20260212.ckpt",
+    "sha256": "bdc7dbd5e4ff21f8f0456fcf90c6b7cdf72dbea960f2d05b19bec19f9b3d4ed0",
+    "bytes": 110368038,
+    "source_repo": "jingang/TabICL"
+  },
+  "fold_protocol": {
+    "source_selection_years": [2020, 2021],
+    "first_unseen_development_gate": 2022,
+    "second_development_gate": 2023,
+    "locked_confirmation_year": 2024,
+    "history_rule": "season < validation season",
+    "fit_game_types": ["R", "F"],
+    "context_rule": "sample at most 16384 rows from the latest available completed season using numpy default_rng(2026), then restore original row order; fill from older seasons only if needed"
+  },
+  "features": {
+    "groups": [
+      "base",
+      "e14",
+      "platoon",
+      "hand_matchup",
+      "e14_hand_cells",
+      "e14_count_cells",
+      "e14_type_count_cells",
+      "trackman_rich",
+      "batter_e14",
+      "batter_middle_e14"
+    ],
+    "e14_k": 50,
+    "pitcher_k": 50,
+    "platoon_k": 50,
+    "batter_e14_k": 80,
+    "batter_middle_k": 100,
+    "feature_view": "drop pitcher_id and raw group-specific e58 fields, identical to exact C",
+    "row_independent": true
+  },
+  "tabicl_recipe": {
+    "params_file": "params/v5_tabiclv2.json",
+    "max_context_rows": 16384,
+    "n_estimators": 2,
+    "fixed_query_rows": 256,
+    "kv_cache": true,
+    "average_logits": true,
+    "softmax_temperature": 0.9,
+    "random_state": 2026
+  },
+  "source_only_selection": {
+    "parent": "exact-C catboost_outcome reverse_any with params/v3_outcome_seed2026.json",
+    "history_center": "mean binary target of the selected TabICL context for each fold",
+    "calibrated_tabicl": "q_s = clip(mu_history + s * (p_tabicl - mu_history), 1e-6, 1-1e-6)",
+    "candidate": "p = (1-alpha) * p_exact_c + alpha * q_s",
+    "shrink_grid": [0.025, 0.05, 0.075, 0.1, 0.15, 0.2, 0.3, 0.5],
+    "alpha_grid": [0.05, 0.1, 0.2, 0.3, 0.5, 0.75, 1.0],
+    "selection_order": [
+      "maximize the minimum full-score gain over exact C across 2020 and 2021",
+      "maximize the minimum R-score gain",
+      "maximize mean full-score gain",
+      "prefer smaller alpha, then smaller shrink"
+    ],
+    "source_open_gate": {
+      "full_and_r_point_gain_positive_in_both_years": true,
+      "pitcher_cluster_95pct_ci_lower_positive_in_both_years": true,
+      "minimum_of_full_and_r_point_gains": 25.0
+    }
+  },
+  "development_and_completion_gates": {
+    "lock_source_selected_shrink_and_alpha_before_2022": true,
+    "open_2023_only_if_2022_minimum_parent_gain_at_least": 75.0,
+    "open_2024_only_if_2022_and_2023_goal_contract_is_eligible": true,
+    "required_G_robust_strictly_greater_than": 132.11992465293316,
+    "expected_lb_lower_formula": "1090.9100565103 + 0.75 * max(0, G_robust)",
+    "v4_same_fold_or_fixed_offset_completion_forbidden": true,
+    "max_models": 2,
+    "nonnegative_weights": true
+  },
+  "stop_rules": {
+    "source_gate_failure": "do not open 2022; archive as negative",
+    "2022_gate_failure": "do not open 2023 or 2024",
+    "row_invariance_failure": "direct deployment is prohibited",
+    "resource_failure": "a resource-only reduction may receive a new experiment ID, never silently alter this recipe"
+  }
+}

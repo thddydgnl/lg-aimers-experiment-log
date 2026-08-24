@@ -1,0 +1,47 @@
+{
+  "experiment_id": "V5_COUNT_MOE_OUTCOME_V1",
+  "created_before_any_new_count_moe_development_prediction": true,
+  "hypothesis": "A global depth-6 outcome tree spends capacity discovering count interactions. Twelve count-specific outcome experts can use their full depth for pitcher, batter, repertoire, and state interactions, then route using only the current row's legal pre-pitch count.",
+  "official_data_only": true,
+  "external_data": false,
+  "test_rows_read": false,
+  "row_independent": true,
+  "routing": {
+    "columns": ["balls_before", "strikes_before"],
+    "states": ["0-0", "0-1", "0-2", "1-0", "1-1", "1-2", "2-0", "2-1", "2-2", "3-0", "3-1", "3-2"],
+    "regular_season": "count MoE direction",
+    "final_or_postseason": "each comparison anchor unchanged"
+  },
+  "parent_recipe": {
+    "features": ["base", "e14", "platoon", "hand_matchup", "e14_hand_cells", "e14_count_cells", "e14_type_count_cells", "trackman_rich", "batter_e14", "batter_middle_e14"],
+    "e14_k": 50,
+    "pitcher_k": 50,
+    "platoon_k": 50,
+    "batter_e14_k": 80,
+    "batter_middle_k": 100,
+    "drop_pitcher_id": true,
+    "drop_group_specific_trackman_e58": true,
+    "outcome_scheme": "reverse_any",
+    "params": "experiments/params/v3_outcome_seed2026.json"
+  },
+  "stages": {
+    "2022": "v5_count_moe_c_dev22",
+    "2023": "v5_count_moe_c_dev23",
+    "2024": "v5_count_moe_c_confirm24"
+  },
+  "candidate_key": "catboost_count_moe",
+  "selection": {
+    "development_years": [2022, 2023],
+    "gamma_grid": [0.25, 0.5, 0.75, 1.0],
+    "comparison_anchors": ["exact_parent_C", "honest_r_identity", "honest_r_grid"],
+    "early_2022_required_full_point_gain": 132.11992465,
+    "early_2022_required_R_ci_low": 0.0,
+    "locked_rule": "maximize the minimum full-score gain across both development years and all anchors among trials with positive R point gain and positive R pitcher-cluster CI lower bound in every cell"
+  },
+  "confirmation": {
+    "year": 2024,
+    "read_only_after_locked_selection": true,
+    "completion_formula": "1090.9100565103 + 0.75 * max(0, min(G_dev_full, G_confirm_full, G_confirm_full_ci_low))",
+    "required_expected_score_strictly_greater_than": 1190.0
+  }
+}

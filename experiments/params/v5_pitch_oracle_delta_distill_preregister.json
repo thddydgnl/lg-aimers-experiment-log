@@ -1,0 +1,60 @@
+{
+  "experiment_id": "V5_PITCH_ORACLE_DELTA_DISTILL_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "preregistered_before_student_source_metrics",
+  "hypothesis": "The dense true-pitch-group expert oracle has a large control ceiling, while explicit pitch classifiers and probability marginalization compound errors. Distilling the oracle-minus-exact-C soft risk directly from a completed historical fold can learn its deployable conditional expectation without exposing the current validation pitch group.",
+  "relationship_to_prior_work": {
+    "physics_teacher": "Prior LUPI distilled current-pitch TrackMan physics or physics-adjusted command, not the dense pitch-expert oracle delta.",
+    "control_relevant_selector": "Prior direct regression targeted a leave-one-out pitcher-by-fine-pitch difficulty scalar, not an outer-OOF full contextual probability delta.",
+    "dense_moe_and_joint": "Prior deployable systems multiplied selector and expert probabilities or classified outcome-by-group. This student learns the soft oracle risk in one regression target."
+  },
+  "data_contract": {
+    "official_train_and_official_trackman_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "source_teacher_year": 2020,
+    "source_evaluation_year": 2021,
+    "teacher_recipe": "2020 outer-OOF dense physics pitch experts trained only on 2019, routed by the reconstructed 2020 pitch group after 2020 became completed history",
+    "teacher_target": "diagnostic_true_group_oracle minus exact-C outer-OOF prediction",
+    "teacher_control_target_2020_used_by_student": false,
+    "evaluation_control_target_used_for_student_fit": false,
+    "current_evaluation_pitch_group_used": false,
+    "other_evaluation_or_test_rows_at_inference": false,
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "student": {
+    "training_scope": "2020 regular-season rows with reconstructed teacher group",
+    "features": "official row-local train/test common columns except row_id and season, plus exact-C probability and logit",
+    "forbidden_features": ["control_success", "current_pitch_group", "teacher_oracle", "row_id", "file_order"],
+    "target_clip": [-0.15, 0.15],
+    "catboost_regressor": {
+      "loss_function": "RMSE",
+      "iterations": 1200,
+      "depth": 6,
+      "learning_rate": 0.02,
+      "l2_leaf_reg": 100.0,
+      "border_count": 32,
+      "random_seed": 2026
+    },
+    "correction_scale_grid": [0.25, 0.5, 0.75, 1.0],
+    "route": "R only; F remains exact-C",
+    "selection": "maximize 2021 R gain, then full gain, then smaller scale"
+  },
+  "semantic_gate": {
+    "minimum_teacher_availability": 0.995,
+    "teacher_source_parent_alignment_exact": true,
+    "evaluation_parent_alignment_exact": true,
+    "single_row_prediction_invariance_max_abs": 0.000002
+  },
+  "source_gate": {
+    "minimum_2021_R_gain": 25.0,
+    "minimum_2021_full_gain": 20.0,
+    "pitcher_cluster_95_ci_lower_positive_R": true,
+    "pitcher_cluster_95_ci_lower_positive_full": true,
+    "on_fail": "Close without constructing a 2022 student candidate.",
+    "on_pass": "Freeze model, feature list and correction scale; train from accumulated completed-fold teachers for 2022/2023, then apply the V5 contract before opening a 2024 candidate."
+  },
+  "bootstrap_iterations": 2000,
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json"
+}

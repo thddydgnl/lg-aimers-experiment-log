@@ -1,0 +1,47 @@
+{
+  "experiment_id": "V5_HGB_STATE_CONTEXT_BLEND_V1",
+  "created_at_kst": "2026-08-21",
+  "status": "locked_before_source_2021_execution",
+  "purpose": "Test the distinct hypothesis that the low-capacity HGB state/context model is useful only as a small complementary component of the honest M3 identity anchor.",
+  "relationship_to_failed_ablation": "V5_HGB_STATE_CONTEXT_V1 is rejected as a standalone candidate and remains prohibited from direct 2024 confirmation. This is a separately locked two-component recipe whose coefficient is selected on an earlier source fold and transferred unchanged.",
+  "data_rules": {
+    "official_train_and_trackman_only": true,
+    "external_data_or_api": false,
+    "fit_game_type": "R only",
+    "history_rule": "season strictly before every scored year",
+    "test_rows_read": false,
+    "test_row_aggregation": false,
+    "row_independent_inference": true,
+    "same_target_fold_weight_fitting": false,
+    "automatic_dacon_submission": false
+  },
+  "source_selection": {
+    "source_target_year": 2021,
+    "hgb_stage": "v5_hgb_state_context_blend_source21",
+    "hgb_recipe": "exact fixed candidate recipe and params from V5_HGB_STATE_CONTEXT_V1",
+    "anchor": "honest M3 R identity for 2021, with its three nonnegative component weights fitted on 2020 R only",
+    "weight_grid_hgb": [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5],
+    "anchor_weight": "1 - hgb_weight",
+    "selection": "minimum 2021 R Brier; exact ties choose the smaller HGB weight",
+    "calibration": "none"
+  },
+  "locked_transfer": {
+    "development_targets": [2022, 2023],
+    "confirmation_target_if_gate_passes": 2024,
+    "components": ["honest M3 R identity anchor", "fixed HGB state/context prediction"],
+    "component_count": 2,
+    "nonnegative_weights_sum_to_one": true
+  },
+  "development_gate": {
+    "uncertainty": "pitcher-cluster bootstrap 95% interval with 1000 fixed-seed replicates",
+    "requirements": [
+      "source-selected HGB weight is greater than zero",
+      "positive R point gain over the exact honest-identity parent in both 2022 and 2023",
+      "positive R 95% gain lower bound over the exact honest-identity parent in both 2022 and 2023",
+      "positive R point gain over honest-grid and exact C in both 2022 and 2023"
+    ],
+    "on_fail": "reject the complementary blend without running 2024",
+    "on_pass": "freeze the source-selected coefficient and run 2024 exactly once"
+  },
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json"
+}

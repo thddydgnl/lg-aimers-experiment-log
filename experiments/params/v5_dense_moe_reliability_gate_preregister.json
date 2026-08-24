@@ -1,0 +1,46 @@
+{
+  "experiment_id": "V5_DENSE_MOE_RELIABILITY_GATE_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "preregistered_before_control_metrics",
+  "hypothesis": "The dense MoE direction is positive in both source years but the current pitch group remains uncertain. A row-local convex gate based only on selector confidence can suppress noisy expert deviations while retaining confident ones.",
+  "relationship_to_prior_work": {
+    "dense_moe": "Uses immutable V5_DENSE_PITCHTYPE_MOE selector probabilities and expert outputs; no retraining.",
+    "constant_blend": "Replaces the prior constant gamma with a single analytic row reliability.",
+    "selective_fine_abstention": "Prior experiment hard-routed fewer than 1.2% of rows using agreement of two fine-type selectors and a hand-built correction. This gate is continuous over all R rows and applies full dense outcome experts."
+  },
+  "data_contract": {
+    "official_train_and_official_trackman_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "source_validation_seasons": [2020, 2021],
+    "latest_control_label_season_used_for_source_metrics": 2021,
+    "current_pitch_group_at_inference": false,
+    "other_validation_or_test_rows_at_inference": false,
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "reliability": {
+    "formula": "clip((max_g P(g|row) - 1/3) / (2/3), 0, 1)",
+    "uses_other_rows": false,
+    "uses_control_target": false,
+    "outer_scale_grid": [1.0, 1.5, 2.0],
+    "effective_scale": "clip(outer_scale * reliability, 0, 1)",
+    "candidate_formula": "F stays exact parent; R = parent + effective_scale(row) * (dense_MoE - parent)",
+    "selection": "maximize minimum full gain over 2020/2021, then minimum R gain, then smaller outer scale"
+  },
+  "candidate_complexity": {
+    "top_level_components": 2,
+    "weights": "row-local nonnegative convex weights summing to one",
+    "confirmation_fold_fit": false
+  },
+  "source_gate": {
+    "minimum_full_gain_each_year": 25.0,
+    "minimum_r_gain_each_year": 25.0,
+    "pitcher_cluster_95_ci_lower_positive_full_each_year": true,
+    "pitcher_cluster_95_ci_lower_positive_r_each_year": true,
+    "on_fail": "Close without reading 2022+ candidate labels.",
+    "on_pass": "Freeze outer scale and formula before 2022/2023; do not open 2024 until both development folds and honest anchors pass."
+  },
+  "bootstrap_iterations": 2000,
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json"
+}

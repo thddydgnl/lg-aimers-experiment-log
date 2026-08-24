@@ -1,0 +1,74 @@
+{
+  "experiment_id": "V5_PHYSICS_ADJUSTED_COMMAND_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "preregistered_before_source_metrics",
+  "hypothesis": "Completed-season outcomes contain a persistent pitcher command component after removing the difficulty explained by that historical pitch's TrackMan physics. A shrunk pitcher mean of control_success minus an out-of-sample physics-teacher probability can transfer better than either raw outcome level or target-free TrackMan profiles.",
+  "novelty_audit": {
+    "v5_privileged_trackman_distill_c": "aggregated physics_teacher and physics_teacher minus control_teacher, but never used realized control_success minus physics_teacher",
+    "v5_lupi_hybrid_denoising": "changed row-level training targets, but did not form a completed-history pitcher residual profile",
+    "v3_e14": "uses historical outcomes without conditioning on the realized historical pitch physics"
+  },
+  "data_contract": {
+    "official_train_and_trackman_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "source_validation_seasons": [2020, 2021],
+    "latest_outcome_label_season_used_for_source_metrics": 2021,
+    "residual_source_cutoff": "season strictly before the validation season",
+    "current_or_validation_trackman_at_inference": false,
+    "deployment_feature": "frozen completed-season pitcher residual table plus current row pitcher_id",
+    "row_independent": true,
+    "automatic_dacon_submission": false
+  },
+  "physics_teacher": {
+    "features": [
+      "balls_before",
+      "strikes_before",
+      "outs_before",
+      "pitcher_hand",
+      "batter_hand",
+      "pitch_type_group",
+      "tagged_pitch_type",
+      "auto_pitch_type",
+      "rel_speed",
+      "spin_rate",
+      "induced_vert_break",
+      "horz_break",
+      "extension",
+      "rel_height",
+      "rel_side",
+      "zone_speed"
+    ],
+    "2019_prediction": "deterministic five-fold GroupKFold out-of-fold prediction with pitcher_id as the grouping key and never as a model feature",
+    "2020_prediction": "strictly out-of-time teacher fit on 2019 and scored on 2020; reuse the immutable v5_trackman_teacher_scores_dev artifact",
+    "model_recipe": "exact LightGBM physics-teacher recipe from V5_PRIVILEGED_TRACKMAN_TEACHER_FEASIBILITY_V1"
+  },
+  "residual_profile": {
+    "row_signal": "control_success minus physics_teacher_probability",
+    "season_centering": "subtract the matched-R source-season mean residual",
+    "group": "pitcher_id",
+    "history_game_type": "R only",
+    "unseen_fallback": 0.0,
+    "smoothing": "sum of centered residual divided by matched row count plus k",
+    "history_windows": ["all", "recent_completed_season"]
+  },
+  "source_grid": {
+    "shrinkage_k": [50, 100, 200, 400, 800],
+    "gammas": [0.05, 0.1, 0.2, 0.35, 0.5, 0.75, 1.0],
+    "application": "on R rows only, clip exact-C plus gamma times the frozen pitcher profile to [0.000001, 0.999999]; preserve exact-C on F",
+    "selection_order": [
+      "maximum minimum full-score gain across 2020 and 2021",
+      "maximum minimum R-score gain across 2020 and 2021",
+      "maximum mean full-score gain",
+      "smaller gamma, larger k, all-history window"
+    ]
+  },
+  "source_gate": {
+    "minimum_full_gain_each_year": 25.0,
+    "minimum_r_gain_each_year": 25.0,
+    "pitcher_cluster_95_ci_lower_positive_each_year": true,
+    "on_fail": "close without opening 2022+ metrics",
+    "on_pass": "freeze one recipe before 2022 and 2023 development"
+  },
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json"
+}

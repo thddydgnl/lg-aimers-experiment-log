@@ -1,0 +1,75 @@
+{
+  "experiment_id": "V5_SEMANTIC_ROW_C",
+  "status": "preregistered_before_development_scores",
+  "created_local_date": "2026-08-21",
+  "hypothesis": "Explicit arithmetic relations among the official current-row career, recent-form, component, and pitch-mix summaries may expose stable nonlinear state interactions that shallow component-C trees do not reliably synthesize from the raw rates.",
+  "external_research_boundary": {
+    "method_only": true,
+    "external_data_used": false,
+    "external_models_or_predictions_used": false,
+    "source_observation": "A lower-scoring public implementation reported cross-year benefit from a compact semantic feature bundle. The formulas are independently implemented and evaluated only with our official-data recipe."
+  },
+  "data_contract": {
+    "official_open_only": true,
+    "test_rows_read": false,
+    "row_independent_inference": true,
+    "fit_target_year_labels": false,
+    "development_years": [2022, 2023],
+    "confirmation_year": 2024,
+    "confirmation_locked_until_development_gate": true
+  },
+  "exact_parent": {
+    "stage": "v3_sparse_c_backtest",
+    "model_key": "catboost_outcome",
+    "features": [
+      "base",
+      "e14",
+      "platoon",
+      "hand_matchup",
+      "e14_hand_cells",
+      "e14_count_cells",
+      "e14_type_count_cells",
+      "trackman_rich",
+      "batter_e14",
+      "batter_middle_e14"
+    ],
+    "outcome_scheme": "reverse_any",
+    "params": "experiments/params/v3_outcome_seed2026.json",
+    "all_feature_drops_and_smoothing_constants_held_fixed": true
+  },
+  "candidate_change": {
+    "added_feature_set": "semantic_row",
+    "new_numeric_features": [
+      "prev5_success_minus_career",
+      "reverse_share_of_failure",
+      "ball_share_of_failure",
+      "pitchmix_entropy",
+      "log_pitcher_n",
+      "success_prev1_minus_prev3",
+      "success_prev3_minus_prev5",
+      "middle_prev1_minus_career",
+      "middle_prev1_minus_prev3",
+      "ball_minus_strike"
+    ],
+    "existing_bundle_member_reused_without_duplication": "c36_same_hand",
+    "all_formulas_use_only_values_from_the_same_row": true,
+    "all_other_features_params_seed_and_training_rows_held_fixed": true
+  },
+  "execution_order": {
+    "first": "score 2022 only",
+    "continue_to_2023_only_if": "2022 R point gain and pitcher-cluster CI lower are positive versus exact C and both honest R anchors",
+    "read_2024_only_if": "the same fixed recipe passes every 2022 and 2023 gate"
+  },
+  "selection_contract": {
+    "primary_scope": "R",
+    "required_point_gain_each_development_year": 0.0,
+    "required_pitcher_cluster_ci_low_each_development_year": 0.0,
+    "comparison_anchors": [
+      "exact_parent_C",
+      "v5_honest_m3_r_identity",
+      "v5_honest_m3_r_grid"
+    ],
+    "eligible_only_if_all_comparisons_pass_both_years": true,
+    "if_failed": "do_not_read_later_locked_years_for_selection_and_close_direction"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "experiment_id": "V5_END_TO_END_PITCH_GATED_CONTROL_V1",
+  "status": "locked_before_2020_source_metrics",
+  "hypothesis": "A supervised soft pitch gate and pitch-specific control experts trained end to end on final control Brier can retain the large legal pitch-conditional oracle signal better than separately optimized pitch classification or independent experts.",
+  "novelty_vs_prior": {
+    "separate_pitch_moe": "Previously optimized selector log-loss and expert outcomes separately.",
+    "dense_multitask": "Previously shared auxiliary heads but primary prediction ignored their pitch probabilities.",
+    "this_recipe": "Final prediction is the differentiable product-sum of a three-way gate and three control experts; final BCE+Brier, gate CE, and true-group expert BCE are trained jointly."
+  },
+  "data_contract": {
+    "official_train_and_trackman_only": true,
+    "history_rows": "R rows with season strictly before validation year",
+    "pitch_group_label": "next same-pitcher official pitchmix-counter increment inside completed history only",
+    "validation_pitch_group_used": false,
+    "validation_target_used_in_training": false,
+    "test_rows_read": false,
+    "external_data_or_api": false,
+    "row_independent_inference": true
+  },
+  "candidate": {
+    "model": "tabm_pitch_gated",
+    "params": "experiments/params/v5_tabm_pitch_gated.json",
+    "features": ["base", "e14", "platoon", "hand_matchup", "e14_hand_cells", "e14_count_cells", "e14_type_count_cells", "trackman_rich", "trackman_stability", "batter_e14", "batter_middle_e14", "pitchmix_e14", "current_state_context", "current_state_level"],
+    "drop_features": ["pitcher_id"],
+    "history_game_type": "R",
+    "route": "blend candidate on R only; exact-C unchanged on F",
+    "parent": "exact-C CatBoost outcome",
+    "blend": "(1-gamma)*parent + gamma*pitch_gated",
+    "component_count": 2,
+    "nonnegative_sum_one": true
+  },
+  "source_protocol": {
+    "selection_year": 2020,
+    "confirmation_year": 2021,
+    "gamma_grid": [0.1, 0.25, 0.5, 0.75, 1.0],
+    "selection_rule": "highest 2020 R gain, then full gain, then smallest gamma",
+    "gate": {
+      "minimum_R_gain_each_year": 50.0,
+      "minimum_full_gain_each_year": 0.0,
+      "R_pitcher_cluster_95_ci_lower_positive_each_year": true,
+      "full_pitcher_cluster_95_ci_lower_positive_each_year": true
+    },
+    "if_2020_fails": "close before training 2021",
+    "if_2020_passes": "lock gamma before training 2021",
+    "if_source_passes": "freeze recipe and evaluate fresh 2022/2023 development before 2024"
+  },
+  "goal_completion_claimed": false
+}

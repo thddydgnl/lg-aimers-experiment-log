@@ -1,0 +1,47 @@
+{
+  "experiment_id": "V5_FINE_PITCH_PROBABILITY_FEATURES_V1",
+  "created_before_candidate_predictions": true,
+  "motivation": "The fine-type oracle is goal-scale, while explicit additive priors fail despite a positive 0.18-0.23 correlation with the oracle. A second-stage exact-C outcome tree may use the full probability simplex conditionally and ignore harmful directions instead of forcing a signed additive correction.",
+  "policy": {
+    "official_open_data_only": true,
+    "test_rows_read": false,
+    "row_independent": true,
+    "current_pitch_type_at_inference": false,
+    "current_pitch_trackman_at_inference": false
+  },
+  "source_protocol": {
+    "years": [2020, 2021],
+    "history": "season strictly less than source year",
+    "later_control_labels_read": false,
+    "comparison": "same-year exact-C parent with no fine probability columns"
+  },
+  "stage1": {
+    "target": "normalized tagged fine pitch type on historically matched official TrackMan rows",
+    "classes": ["Fastball", "Slider", "Curveball", "ChangeUp", "Splitter", "Sinker", "Cutter", "Other"],
+    "family": "three deterministic cross-fitted CatBoost MultiClass models",
+    "training_probability": "a labeled history row is predicted only by the fold model that excluded it; unmatched rows use the fold mean",
+    "validation_probability": "mean of the same three outer-history fold models",
+    "features": "official pre-pitch base columns",
+    "params": {
+      "iterations": 400,
+      "depth": 6,
+      "learning_rate": 0.06,
+      "l2_leaf_reg": 20.0
+    }
+  },
+  "stage2": {
+    "parent": "exact component C",
+    "addition": "eight fine-type probabilities plus row entropy and maximum probability",
+    "outcome_scheme": "reverse_any",
+    "params": "experiments/params/v3_outcome_seed2026.json",
+    "all_other_features_and_drops": "identical to exact-C"
+  },
+  "source_gate": {
+    "minimum_full_gain_each_year": 5.0,
+    "minimum_R_gain_each_year": 5.0,
+    "pitcher_cluster_95pct_ci_lower_positive_each_year": true,
+    "all_conditions_required": true
+  },
+  "next_step_if_pass": "preregister unchanged recipe for 2022 and 2023",
+  "next_step_if_fail": "close fine-pitch deployable selector axis without opening 2022+"
+}

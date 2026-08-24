@@ -1,0 +1,68 @@
+{
+  "experiment_id": "V5_SUCCESS_FOCUSED_OUTCOME_V1",
+  "status": "locked_before_source_metrics",
+  "locked_at_kst": "2026-08-22",
+  "hypothesis": "Exact-C gains representation from auxiliary failure subtypes, but ordinary MultiClass devotes equal row loss to separating those subtypes even though the competition only scores the success marginal. Uniformly reducing every failure-class training weight, followed by the engine's exact prior-unweighting step, may retain auxiliary structure while allocating more tree capacity to success versus failure.",
+  "novelty_audit": {
+    "prior_weighted_run": "v4_outcome_weight_failure used unequal weights [middle=1.5, reverse=1.1, success=1.0, wide=1.25] on 2024 only, which emphasized failure distinctions rather than success separation.",
+    "current_direction": "All failure subclasses receive one common weight below one, so their internal relative prior is unchanged.",
+    "multiseed_and_regularization_not_repeated": "Seed bagging and global L2/border regularization are separate closed families."
+  },
+  "legality": {
+    "official_open_data_only": true,
+    "external_data_model_predictions_or_api": false,
+    "future_labels": false,
+    "test_rows_read": false,
+    "evaluation_row_aggregation_order_or_distribution": false,
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "parent": {
+    "recipe": "exact component C",
+    "outcome_scheme": "reverse_any",
+    "parameters": "experiments/params/v3_outcome_seed2026.json"
+  },
+  "candidate_family": {
+    "all_features_and_nonweight_parameters": "identical to exact component C",
+    "failure_weight_grid": [0.25, 0.5, 0.75],
+    "success_weight": 1.0,
+    "class_prior_correction": "Divide predicted class probabilities by their training class weights and renormalize before summing success classes; already implemented in fit_outcome_model.",
+    "blend_formula": "clip((1-gamma)*parent_exact_C + gamma*success_focused_model, 1e-6, 1-1e-6)",
+    "blend_grid": [0.25, 0.5, 0.75, 1.0],
+    "selection_order": [
+      "maximize minimum full-score gain over 2020 and 2021",
+      "maximize minimum R-score gain over 2020 and 2021",
+      "maximize mean full-score gain",
+      "prefer smaller gamma",
+      "prefer larger failure weight"
+    ],
+    "maximum_selected_components": 2
+  },
+  "source_protocol": {
+    "years": [2020, 2021],
+    "latest_label_season_read": 2021,
+    "history_rule": "season strictly before validation season",
+    "advance_gate": {
+      "minimum_full_gain_each_year": 50.0,
+      "minimum_R_gain_each_year": 50.0,
+      "full_pitcher_cluster_95_ci_low_each_year": 0.0,
+      "R_pitcher_cluster_95_ci_low_each_year": 0.0
+    },
+    "bootstrap_iterations": 2000,
+    "on_fail": "Close the entire uniform failure-weight family without reading 2022+ candidate labels.",
+    "on_pass": "Freeze failure weight and gamma before untouched 2022/2023 development."
+  },
+  "development_protocol_if_source_passes": {
+    "years": [2022, 2023],
+    "required_minimum_full_gain_against_exact_parent_and_both_honest_anchors": 132.11992465293324,
+    "required_pitcher_cluster_ci_lower_positive": true,
+    "lock_before_2024": true
+  },
+  "completion": {
+    "source_or_development_metrics_cannot_complete_goal": true,
+    "2024_must_remain_unread_until_recipe_lock": true,
+    "conservative_expected_lb_lower_must_exceed": 1190.0,
+    "actual_submission_is_manual": true
+  },
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json"
+}

@@ -1,0 +1,41 @@
+{
+  "experiment_id": "V5_EXACT_C_TEMPORAL_AMPLITUDE_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "preregistered_before_source_amplitude_metrics",
+  "hypothesis": "The exact-C outcome model may be systematically under- or over-dispersed out of time. A single fixed amplitude around the immediately preceding completed R-season mean can improve Brier score while preserving ranking, row independence, and the exact parent on F.",
+  "parent": "exact-C CatBoost outcome",
+  "source_years": [2020, 2021],
+  "formula": {
+    "center_Y": "official-train R control_success mean in season Y-1",
+    "R": "clip(center_Y + alpha * (exact_C - center_Y), 1e-6, 1-1e-6)",
+    "F": "exact_C unchanged",
+    "alpha_grid": [0.8, 0.9, 1.0, 1.1, 1.2, 1.3]
+  },
+  "selection": {
+    "objective": "maximize min(2020_R_point_gain, 2021_R_point_gain)",
+    "tie_breakers": [
+      "maximize min pitcher-cluster 95% CI lower gain",
+      "minimum absolute distance from 1.0",
+      "smaller alpha"
+    ],
+    "bootstrap_replicates": 2000,
+    "bootstrap_seed": 20260822
+  },
+  "source_gate": {
+    "required_each_year": [
+      "R point gain >= 50 raw score points",
+      "pitcher-cluster 95% CI lower gain > 0",
+      "routed-full point gain > 0"
+    ],
+    "on_fail": "close without evaluating the calibrated recipe on 2022, 2023, or 2024",
+    "on_pass": "lock alpha and implementation hash before opening 2022/2023"
+  },
+  "contract": {
+    "no_same_target_fit_after_source_selection": true,
+    "no_validation_batch_statistics": true,
+    "no_test_batch_statistics": true,
+    "row_independent": true,
+    "component_count": 1,
+    "signed_residual_stack": false
+  }
+}

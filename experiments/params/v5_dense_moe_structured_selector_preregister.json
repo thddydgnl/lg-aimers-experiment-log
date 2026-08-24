@@ -1,0 +1,49 @@
+{
+  "experiment_id": "V5_DENSE_MOE_STRUCTURED_SELECTOR_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "preregistered_before_combined_control_metrics",
+  "hypothesis": "The immutable dense experts may benefit from a fully deterministic row-local repertoire selector. The structured component of the independently pitch-label-selected recipe avoids CatBoost GPU probability drift while retaining current-season mix and completed-history pitcher-by-hand-count tilt.",
+  "relationship_to_prior_work": {
+    "dense_experts": "Reuse V5_DENSE_PITCHTYPE_MOE_V1 source expert predictions without retraining.",
+    "selector_source": "Use the structured component and hyperparameters inside the frozen V5_ROW_LOCAL_PITCHMIX_SELECTOR recipe; no control target chose this follow-up selector.",
+    "locked_catboost_followup": "V5_DENSE_MOE_LOCKED_SELECTOR failed its strict reproduction gate before control metrics, so none of its control labels or metrics are used."
+  },
+  "data_contract": {
+    "official_train_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "source_validation_seasons": [2020, 2021],
+    "latest_control_label_season_used_for_source_metrics": 2021,
+    "history_rule": "season strictly before validation season",
+    "current_pitch_group_at_inference": false,
+    "other_validation_or_test_rows_at_inference": false,
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "selector": {
+    "type": "deterministic structured probability; no fitted selector model",
+    "state_k": 20,
+    "context_variant": "pitcher_hand_count",
+    "context_k": 20,
+    "tilt_lambda": 1.0,
+    "formula": "normalize(current-season EB pitchmix K20 * completed-history P(group|pitcher,hand,count)/P(group|pitcher))",
+    "unseen_fallback": "completed-history pitcher or league probability"
+  },
+  "candidate": {
+    "groups": ["fastball", "breaking", "offspeed"],
+    "soft_prediction": "sum_g structured_selector_probability_g * immutable_dense_expert_probability_g",
+    "top_level_blend_grid": [0.25, 0.5, 0.75, 1.0],
+    "blend_formula": "F rows remain exact parent; on R, parent + gamma * (structured-selector dense-MoE - parent)",
+    "selection": "maximize minimum full gain across 2020/2021, then minimum R gain, then smaller gamma"
+  },
+  "source_gate": {
+    "minimum_full_gain_each_year": 25.0,
+    "minimum_r_gain_each_year": 25.0,
+    "pitcher_cluster_95_ci_lower_positive_full_each_year": true,
+    "pitcher_cluster_95_ci_lower_positive_r_each_year": true,
+    "on_fail": "Close without reading 2022+ candidate labels.",
+    "on_pass": "Freeze gamma and recipe before 2022/2023; do not open 2024 until development and honest-anchor gates pass."
+  },
+  "bootstrap_iterations": 1000,
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json"
+}

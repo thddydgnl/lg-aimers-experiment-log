@@ -1,0 +1,116 @@
+{
+  "experiment_id": "V5_TRACKMAN_WORKLOAD_C_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_before_2022_2023_candidate_metrics",
+  "validation_contract": "experiments/params/v5_validation_contract_v2.json",
+  "hypothesis": "The official TrackMan pitch sequence contains a target-free view of a pitcher's typical within-appearance workload. Current inning alone cannot distinguish a starter near pitch 80 from a reliever near pitch 8. A frozen pitcher-by-inning workload profile can expose that distinction to exact-C without using target-season TrackMan rows or any other evaluation row.",
+  "relationship_to_prior_work": {
+    "pitcher_profile": "The earlier main-table profile summarized inning usage only. It did not reconstruct pitch index within a pitcher appearance from TrackMan game_id and pitch_no.",
+    "recent_denominators": "That feature reconstructed prior-game opportunity counts from rounded official rates. It did not estimate the current appearance's workload position.",
+    "trackman_rich": "Exact-C already uses completed-history physical means and pitch mix. This candidate adds only sequence-derived workload features and leaves the physical profile unchanged."
+  },
+  "legality": {
+    "official_train_and_trackman_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "test_aggregation_distribution_or_order": false,
+    "future_labels": false,
+    "target_columns_used_in_workload_profile": false,
+    "target_season_trackman_used": false,
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "fixed_feature_recipe": {
+    "source_rows": "conservatively linked official TrackMan rows with game_type R and season strictly before the predicted row season",
+    "appearance_key": ["trackman_game_id", "pitcher_id"],
+    "appearance_order": "ascending numeric pitch_no with stable mergesort",
+    "appearance_pitch_index": "one plus zero-based cumcount within appearance_key",
+    "cell_key": ["pitcher_id", "inning"],
+    "supported_innings": "union of observed integer innings and fixed integers 0..20",
+    "cell_shrinkage": {
+      "k": 100.0,
+      "prior": "the matching league-wide inning value, with league overall fallback"
+    },
+    "pitcher_appearance_shrinkage": {
+      "k_appearances": 10.0,
+      "prior": "league-wide appearance value"
+    },
+    "columns": [
+      "e100_profile_n_log",
+      "e100_appearance_count_log",
+      "e100_mean_appearance_pitches",
+      "e100_starter_rate",
+      "e100_cell_n_log",
+      "e100_expected_appearance_pitch_index",
+      "e100_prob_index_ge25",
+      "e100_prob_index_ge50",
+      "e100_prob_index_ge75",
+      "e100_expected_progress",
+      "e100_cell_unseen",
+      "e100_profile_unseen"
+    ],
+    "expected_progress": "e100_expected_appearance_pitch_index divided by max(e100_mean_appearance_pitches, 1)",
+    "unknown_pitcher": "use the frozen league inning prior; set both unseen flags to one",
+    "known_pitcher_unknown_inning_cell": "use the frozen league inning prior; set cell_unseen to one",
+    "row_order_invariance_required": true
+  },
+  "fixed_model_recipe": {
+    "stage": "v5_trackman_workload_c_source",
+    "parent_stage": "v3_sparse_c_backtest",
+    "model": "catboost_outcome",
+    "outcome_scheme": "reverse_any",
+    "params": "experiments/params/v3_outcome_seed2026.json",
+    "inner_validation": "none",
+    "features": [
+      "base",
+      "e14",
+      "platoon",
+      "hand_matchup",
+      "e14_hand_cells",
+      "e14_count_cells",
+      "e14_type_count_cells",
+      "trackman_rich",
+      "trackman_workload",
+      "batter_e14",
+      "batter_middle_e14"
+    ],
+    "smoothing": {
+      "e14_k": 50,
+      "k_pitcher": 50,
+      "k_platoon": 50,
+      "batter_e14_k": 80,
+      "batter_middle_k": 100
+    },
+    "drop_features": "pitcher_id plus every e58 pitch-group-specific rate and physical mean; exact list must equal v3_sparse_c_backtest",
+    "candidate_route": "For every comparison baseline, blend the workload model on R rows only; preserve that comparison baseline exactly on F rows."
+  },
+  "development": {
+    "years": [2022, 2023],
+    "unopened_confirmation_year": 2024,
+    "blend_grid": [0.25, 0.5, 0.75, 1.0],
+    "formula_R": "(1-gamma)*comparison_baseline + gamma*workload_model",
+    "comparisons": [
+      "exact_parent_C",
+      "v5_honest_m3_r_identity",
+      "v5_honest_m3_r_grid"
+    ],
+    "ranking": "maximum minimum full-score gain across both years and all comparisons; then maximum minimum R gain; then smaller gamma",
+    "advance_gate": {
+      "minimum_development_full_gain": 132.11992465293324,
+      "positive_R_pitcher_cluster_95_ci_lower_every_cell": true,
+      "positive_full_pitcher_cluster_95_ci_lower_every_cell": true,
+      "feature_row_order_invariance": true,
+      "model_prediction_artifact_alignment": true
+    },
+    "on_fail": "Close this recipe without fitting or reading a 2024 workload candidate.",
+    "on_pass": "Write an immutable confirmation lock before fitting 2024; no feature, model, route, gamma, or shrinkage changes are permitted."
+  },
+  "complexity_contract": {
+    "outer_components": ["comparison_baseline", "trackman_workload_model"],
+    "maximum_outer_components": 2,
+    "outer_weights_nonnegative_sum_one": true,
+    "same_fold_meta_fit": false,
+    "signed_outer_residual_stack": false
+  },
+  "goal_completion_claimed": false
+}

@@ -1,0 +1,55 @@
+{
+  "experiment_id": "V5_DROP_MONTH_C",
+  "status": "preregistered_before_development_scores",
+  "created_local_date": "2026-08-21",
+  "hypothesis": "In the exact V3 component-C recipe, game_month can let CatBoost memorize within-season drift already represented by row-local E14 and recent-game state. Removing only game_month may improve one-year-ahead transfer.",
+  "external_research_boundary": {
+    "method_only": true,
+    "external_data_used": false,
+    "external_models_or_predictions_used": false,
+    "source_observation": "A lower-scoring public implementation reported that month and historical conditional features interacted adversely; this experiment independently tests the one-column ablation in our recipe."
+  },
+  "data_contract": {
+    "official_open_only": true,
+    "test_rows_read": false,
+    "row_independent_inference": true,
+    "fit_target_year_labels": false,
+    "development_years": [2022, 2023],
+    "confirmation_year": 2024,
+    "confirmation_locked_until_development_gate": true
+  },
+  "exact_parent": {
+    "stage": "v3_sparse_c_backtest",
+    "model_key": "catboost_outcome",
+    "features": [
+      "base",
+      "e14",
+      "platoon",
+      "hand_matchup",
+      "e14_hand_cells",
+      "e14_count_cells",
+      "e14_type_count_cells",
+      "trackman_rich",
+      "batter_e14",
+      "batter_middle_e14"
+    ],
+    "outcome_scheme": "reverse_any",
+    "params": "experiments/params/v3_outcome_seed2026.json"
+  },
+  "candidate_change": {
+    "only_added_drop_feature": "game_month",
+    "all_other_features_params_seed_and_training_rows_held_fixed": true
+  },
+  "selection_contract": {
+    "primary_scope": "R",
+    "required_point_gain_each_development_year": 0.0,
+    "required_pitcher_cluster_ci_low_each_development_year": 0.0,
+    "comparison_anchors": [
+      "exact_parent_C",
+      "v5_honest_m3_r_identity",
+      "v5_honest_m3_r_grid"
+    ],
+    "eligible_only_if_all_comparisons_pass_both_years": true,
+    "if_failed": "do_not_read_2024_for_selection_and_close_direction"
+  }
+}

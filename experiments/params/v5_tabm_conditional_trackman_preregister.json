@@ -1,0 +1,97 @@
+{
+  "experiment_id": "V5_TABM_CONDITIONAL_TRACKMAN_V1",
+  "created_at_kst": "2026-08-21",
+  "status": "locked_before_execution",
+  "purpose": "Test whether seven historical conditional TrackMan deviations add stable information to the strongest credible TabM success-call outcome parent.",
+  "novelty_audit": {
+    "exact_tabm_parent": "v4_tabm_enhanced_successcall_all already includes overall rich TrackMan, stability, full current state, X, and H1",
+    "existing_conditional_trackman": "count and platoon profiles were tested in CatBoost and the new low-capacity HGB, but never in TabM outcome",
+    "external_research_boundary": "Public implementations motivated retaining only speed and pitch-mix deviations. No external data, model, prediction, or copied source code is used."
+  },
+  "data_rules": {
+    "official_train_and_trackman_only": true,
+    "external_data_or_api": false,
+    "history_rule": "TrackMan profiles and target labels use seasons strictly before the target year",
+    "test_rows_read": false,
+    "test_row_aggregation": false,
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "folds": {
+    "development_targets": [2022, 2023],
+    "locked_confirmation": 2024,
+    "deployment": 2025
+  },
+  "exact_parent": {
+    "stage": "v4_tabm_enhanced_successcall_all",
+    "model_key": "tabm_outcome",
+    "features": [
+      "base",
+      "e14",
+      "platoon",
+      "hand_matchup",
+      "e14_hand_cells",
+      "e14_count_cells",
+      "e14_type_count_cells",
+      "trackman_rich",
+      "trackman_stability",
+      "batter_e14",
+      "batter_middle_e14",
+      "current_state_context",
+      "current_state_level"
+    ],
+    "params": "experiments/params/v4_tabm_outcome_ce.json",
+    "outcome_scheme": "success_call",
+    "inner_validation": "none",
+    "fixed_hyperparameters": {
+      "e14_k": 50.0,
+      "k_pitcher": 50.0,
+      "k_platoon": 50.0,
+      "batter_e14_k": 80.0,
+      "batter_middle_k": 100.0
+    },
+    "drop_features": "exact parent list plus the preregistered conditional exclusions below"
+  },
+  "candidate": {
+    "stage": "v5_tabm_successcall_conditional_tm_dev2223",
+    "only_feature_flags_added": ["trackman_platoon", "trackman_count"],
+    "trackman_platoon_k": 200.0,
+    "trackman_count_k": 200.0,
+    "retained_new_features": [
+      "e59_rel_speed_delta",
+      "e59_fastball_rate_delta",
+      "e59_breaking_rate_delta",
+      "e59_offspeed_rate_delta",
+      "e71_fastball_rate_delta",
+      "e71_breaking_rate_delta",
+      "e71_offspeed_rate_delta"
+    ],
+    "excluded_new_features": [
+      "e59_platoon_n_log",
+      "e59_spin_rate_delta",
+      "e59_induced_vert_break_delta",
+      "e59_horz_break_delta",
+      "e59_extension_delta",
+      "e59_rel_height_delta",
+      "e59_rel_side_delta",
+      "e59_zone_speed_delta",
+      "e59_other_rate_delta",
+      "e59_platoon_unseen",
+      "e71_count_n_log",
+      "e71_other_rate_delta",
+      "e71_count_unseen"
+    ],
+    "all_parent_parameters_training_rows_seed_and_outcome_labels_held_fixed": true
+  },
+  "development_gate": {
+    "uncertainty": "pitcher-cluster bootstrap 95% interval with 1000 fixed-seed replicates",
+    "requirements": [
+      "positive R point gain over exact TabM parent in both 2022 and 2023",
+      "positive R 95% gain lower bound over exact TabM parent in both 2022 and 2023",
+      "positive R point gain over exact C and both honest R anchors in both 2022 and 2023"
+    ],
+    "on_fail": "reject without running 2024",
+    "on_pass": "freeze the exact recipe and run 2024 once"
+  },
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json"
+}

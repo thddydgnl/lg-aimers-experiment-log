@@ -1,0 +1,64 @@
+{
+  "experiment_id": "V5_AUTO_PITCH_PROFILE_JOINT_OUTCOME_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_before_source_training",
+  "hypothesis": "The prior auto-pitch joint model improved R in both source years, but its selector used no explicit fine-grained pitcher repertoire. Cross-fitted 8-type pitcher and pitcher-by-count/hand repertoire probabilities can improve current-pitch marginalization without observing the current pitch type.",
+  "source_protocol": {
+    "years": [2020, 2021],
+    "parent": "exact C",
+    "route": "apply candidate blend only when the row-local game_type is R; keep exact C for F",
+    "ranking": "maximize minimum R gain, then minimum full gain, then mean R gain, then prefer smaller gamma",
+    "top_level_blend_grid": [0.1, 0.25, 0.5, 0.75, 1.0],
+    "bootstrap_iterations": 2000,
+    "gate": {
+      "minimum_R_gain_each_year": 40.0,
+      "minimum_full_gain_each_year": 0.0,
+      "R_pitcher_cluster_95_ci_lower_positive_each_year": true,
+      "full_pitcher_cluster_95_ci_lower_positive_each_year": true,
+      "minimum_selector_top1_improvement_each_year": 0.005,
+      "selector_log_loss_must_improve_each_year": true
+    },
+    "on_fail": "Close without reading 2022, 2023, or 2024 candidate metrics.",
+    "on_pass": "Lock gamma and run fresh 2022/2023 development folds."
+  },
+  "candidate": {
+    "model": "catboost_auto_pitch_joint",
+    "params": "experiments/params/v5_auto_pitch_joint_catboost.json",
+    "outcome_scheme": "reverse_any",
+    "fine_pitch_types": ["Fastball", "Slider", "Curveball", "ChangeUp", "Splitter", "Sinker", "Cutter", "Other"],
+    "features": ["base", "e14", "platoon", "hand_matchup", "e14_hand_cells", "e14_count_cells", "e14_type_count_cells", "trackman_rich", "batter_e14", "batter_middle_e14", "pitchmix_e14", "auto_pitch_profile_latent"],
+    "drop_features": ["pitcher_id"],
+    "prediction": "sum all success|pitch=<auto type> probabilities; route the blend on row-local R only",
+    "current_pitch_type_at_inference": false,
+    "current_pitch_trackman_at_inference": false,
+    "row_independent_inference": true
+  },
+  "profile_contract": {
+    "label": "official historical auto_pitch_type matched by row_id",
+    "cross_fitting": "three deterministic row-id folds",
+    "selector_fit_profile": "leave-one-out within each selector fit fold",
+    "outcome_train_profile": "profile from the selector fold that excluded that labeled row; unmatched rows average three folds",
+    "outer_validation_profile": "average of three tables built only from outer-history selector fit rows",
+    "specs": [
+      {"name": "pitcher", "keys": ["pitcher_id"], "shrinkage": 50.0},
+      {"name": "pitcher_count", "keys": ["pitcher_id", "balls_before", "strikes_before"], "shrinkage": 40.0},
+      {"name": "pitcher_hand", "keys": ["pitcher_id", "batter_hand"], "shrinkage": 40.0},
+      {"name": "pitcher_hand_count", "keys": ["pitcher_id", "batter_hand", "balls_before", "strikes_before"], "shrinkage": 60.0}
+    ],
+    "probability_feature_count": 32
+  },
+  "semantic_gate": {
+    "minimum_history_auto_label_coverage_each_year": 0.5,
+    "minimum_success_joint_classes_each_year": 7,
+    "all_eight_types_required_each_year": true,
+    "profile_training_self_excluded": true
+  },
+  "data_contract": {
+    "official_open_data_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "future_labels_or_future_trackman": false,
+    "automatic_dacon_submission": false
+  },
+  "goal_completion_claimed": false
+}

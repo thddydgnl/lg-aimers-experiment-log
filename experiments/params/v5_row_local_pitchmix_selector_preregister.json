@@ -1,0 +1,75 @@
+{
+  "experiment_id": "V5_ROW_LOCAL_PITCHMIX_SELECTOR_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "preregistered_before_source_metrics",
+  "hypothesis": "The dense coarse-pitch oracle has goal-scale control headroom, but the prior selector saw only career pitchmix rates. The current row's official pitchmix counters can reconstruct the pitcher's current-season repertoire relative to a frozen preseason state. Combining this row-local state with completed-history count and hand-count selection tilts should improve current-group probabilities without using another validation or test row.",
+  "relationship_to_failed_parent": {
+    "parent": "V5_COUNTER_RECONSTRUCTED_PITCH_HIERARCHY_V1",
+    "parent_oracle_min_full_gain": 206.8883489853308,
+    "parent_selector_accuracy": "0.56-0.57",
+    "parent_candidate_result": "negative on both source folds",
+    "new_information": "explicit current-season pitchmix state reconstructed from each row and frozen preseason counters; not present in BASE_FEATURES"
+  },
+  "data_contract": {
+    "official_train_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "source_validation_seasons": [2020, 2021],
+    "latest_control_label_season_used_for_metrics": 2021,
+    "training_group_labels": "Reconstructed only inside completed historical slices from next same-pitcher official pitchmix counters.",
+    "validation_group_labels": "Selector diagnostics and selection only; never an inference input.",
+    "current_pitch_group_at_inference": false,
+    "other_validation_or_test_rows_at_inference": false,
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "row_local_state": {
+    "preseason_state": "For each pitcher, freeze the final completed-history row's asof_pitcher_pitchmix_n and rounded group counts; deliberately omit the unobservable last-pitch increment, consistently in validation and deployment.",
+    "current_season_state": "Subtract the frozen preseason counts from the current row's official counters; invalid negative states fall back to zero.",
+    "groups": ["fastball", "breaking", "offspeed"],
+    "state_k": [20, 50, 100, 200],
+    "features": "current-season n/log-n, completed-state group rates, and EB current-season group rates/deltas at every registered k"
+  },
+  "completed_history_context": {
+    "variants": ["none", "pitcher_count", "pitcher_hand_count"],
+    "context_k": [20, 50, 100, 200],
+    "tilt_lambda": [0.25, 0.5, 0.75, 1.0],
+    "formula": "Normalize current-season EB probabilities times (completed-history context probability divided by completed-history pitcher probability) to lambda.",
+    "unseen_fallback": "completed-history pitcher or league group probability"
+  },
+  "selector_models": {
+    "base_catboost": "Parent 400-tree BASE_FEATURES MultiClass selector, retained as the label-metric baseline only.",
+    "state_catboost": "Same fixed CatBoost parameters with the registered row-local state features appended.",
+    "structured": "Analytical row-local state plus optional completed-history context tilt.",
+    "blend": "Nonnegative probability blend of state_catboost and structured selector."
+  },
+  "selector_selection": {
+    "blend_state_catboost_weight": [0.0, 0.25, 0.5, 0.75, 1.0],
+    "uses_control_success_for_selection": false,
+    "primary": "maximum minimum reconstructed-pitch log-loss improvement versus base CatBoost across 2020 and 2021",
+    "secondary": "maximum mean log-loss improvement, then maximum minimum top-1 accuracy improvement, then simpler context and stronger shrinkage",
+    "required_log_loss_improvement_each_year": 0.002,
+    "freeze_before_control_metric": true
+  },
+  "control_correction_after_selector_lock": {
+    "outcome_k": [10, 50, 100],
+    "repertoire_k": [50, 200],
+    "gammas": [0.1, 0.25, 0.5, 0.75, 1.0],
+    "direction": "Selected group probability minus completed-history pitcher repertoire, multiplied by pitcher-by-group centered control effects; apply only to R exact-C."
+  },
+  "source_gate": {
+    "selector_log_loss_improvement_each_year": 0.002,
+    "minimum_full_gain_each_year": 25.0,
+    "minimum_r_gain_each_year": 25.0,
+    "pitcher_cluster_95_ci_lower_positive_each_year": true,
+    "on_fail": "Close without reading 2022+ labels.",
+    "on_pass": "Freeze selector and control parameters before 2022 and 2023."
+  },
+  "oracle_reference": {
+    "source": "Immutable parent report",
+    "minimum_full_gain": 206.8883489853308,
+    "eligible_as_candidate": false,
+    "eligible_for_expected_lb": false
+  },
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json"
+}

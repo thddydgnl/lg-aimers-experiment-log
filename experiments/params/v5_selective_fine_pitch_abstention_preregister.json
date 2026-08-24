@@ -1,0 +1,58 @@
+{
+  "experiment_id": "V5_SELECTIVE_FINE_PITCH_ABSTENTION_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "preregistered_before_source_metrics",
+  "hypothesis": "The fine-pitch oracle is goal-sized but a wrong hard route is much more costly than a correct route is beneficial. Apply a pitcher-by-fine-type control correction only when separate tagged-type and auto-type selectors agree with high confidence; abstain to exact-C everywhere else.",
+  "depends_on": {
+    "fine_pitch_oracle": "V5_FINE_PITCHTYPE_LATENT_V1",
+    "observed_oracle_min_full_gain": 170.14354358944047,
+    "failed_soft_marginalization": true,
+    "failed_probability_features": true
+  },
+  "data_contract": {
+    "official_train_and_trackman_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "source_validation_seasons": [2020, 2021],
+    "latest_control_label_season_used_for_source_metrics": 2021,
+    "history_cutoff": "season strictly before validation season",
+    "current_pitch_type_at_inference": false,
+    "current_or_validation_trackman_at_inference": false,
+    "row_independent": true,
+    "automatic_dacon_submission": false
+  },
+  "selectors": {
+    "models": "the fixed CatBoost tagged and auto fine-pitch selectors from V5_FINE_PITCHTYPE_LATENT_V1",
+    "fine_types": ["Fastball", "Slider", "Curveball", "ChangeUp", "Splitter", "Sinker", "Cutter", "Other"],
+    "route_type": "top-1 type only when tagged-selector top-1 equals auto-selector top-1",
+    "confidence": "minimum of the two selectors' top-1 probabilities",
+    "abstention": "if selectors disagree or confidence is below threshold, use exact-C unchanged"
+  },
+  "control_profile": {
+    "profile_sources": ["tagged", "auto"],
+    "row_signal": "control_success minus source-season mean",
+    "group": "pitcher_id by fine pitch type",
+    "outcome_shrinkage_k": [50, 100],
+    "repertoire_shrinkage_k": [50, 200],
+    "hard_direction": "selected fine-type control level minus the pitcher's historical repertoire-weighted expected control level"
+  },
+  "source_grid": {
+    "confidence_thresholds": [0.45, 0.55, 0.65, 0.75, 0.85],
+    "gammas": [0.05, 0.1, 0.2, 0.35, 0.5, 0.75],
+    "application": "add gamma times hard_direction on eligible R rows, clip to [0.000001, 0.999999], and preserve exact-C on abstained R and all F rows",
+    "selection_order": [
+      "maximum minimum full-score gain across 2020 and 2021",
+      "maximum minimum R-score gain",
+      "maximum mean full-score gain",
+      "higher confidence threshold, smaller gamma, larger shrinkage, tagged profile"
+    ]
+  },
+  "source_gate": {
+    "minimum_full_gain_each_year": 25.0,
+    "minimum_r_gain_each_year": 25.0,
+    "pitcher_cluster_95_ci_lower_positive_each_year": true,
+    "on_fail": "close without opening 2022+ metrics",
+    "on_pass": "freeze one route and correction recipe before 2022 and 2023 development"
+  },
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json"
+}

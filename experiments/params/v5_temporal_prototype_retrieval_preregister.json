@@ -1,0 +1,102 @@
+{
+  "experiment_id": "V5_TEMPORAL_PROTOTYPE_RETRIEVAL_V1",
+  "status": "locked_before_source_metrics",
+  "locked_at_kst": "2026-08-22",
+  "hypothesis": "A fixed lookup library of completed historical pitcher-season/count/hand prototypes can recover local nonlinear control behavior that global trees and exact categorical shrinkage miss. Retrieval uses only the current row's official state vector and a frozen history library, so every evaluation/test row is predicted independently.",
+  "novelty_audit": {
+    "prior_group_rates": "V3 history groups and V4/V5 residual tables used exact categorical tables. They did not search continuous current-state neighborhoods across pitchers.",
+    "prior_tabr": "The only TabR run was a 50k-row two-epoch CPU smoke on 2024. It was not a fixed, auditable temporal prototype estimator and was never source-validated.",
+    "prior_catboost": "CatBoost partitions continuous features globally; this candidate performs explicit local kernel retrieval over completed-history prototypes.",
+    "not_a_minor_hyperparameter_change": true
+  },
+  "legality": {
+    "official_open_train_only": true,
+    "external_data_or_api": false,
+    "future_labels": false,
+    "test_rows_read_or_aggregated": false,
+    "evaluation_row_order_or_batch_statistics": false,
+    "fixed_history_library_before_target_season": true,
+    "row_independent_query": true,
+    "automatic_dacon_submission": false
+  },
+  "parent": {
+    "recipe": "exact component C",
+    "source_artifacts": {
+      "2020": "experiments/results/predictions/v4_m3_c_backtest_2020_2020.npz",
+      "2021": "experiments/results/predictions/v4_m3_c_backtest_2021_2021.npz"
+    }
+  },
+  "prototype": {
+    "history_rule": "season strictly before target season; R rows only",
+    "group_keys": [
+      "season",
+      "pitcher_id",
+      "balls_before",
+      "strikes_before",
+      "pitcher_hand",
+      "batter_hand"
+    ],
+    "search_bucket": [
+      "balls_before",
+      "strikes_before",
+      "pitcher_hand",
+      "batter_hand"
+    ],
+    "numeric_state": [
+      "official pitcher success/reverse/middle/ball/strike rates",
+      "official previous 1/3/5 game success and middle rates",
+      "official batter success/middle rates",
+      "official pitcher pitchmix rates",
+      "log official pitcher/batter/pitchmix counts",
+      "month, inning, outs, runner count, score differential and leverage"
+    ],
+    "scaling": "history-prototype median and IQR/1.349, with standard-deviation fallback; frozen per target fold",
+    "distance": "exact L2 by FAISS IndexFlatL2 inside a fixed count-and-hand bucket",
+    "neighbor_weight": "inverse (1 + Euclidean distance) times sqrt(min(prototype rows, 256))",
+    "state_prior": "(asof_pitcher_n*asof_pitcher_success_rate + 50*historical_R_rate)/(asof_pitcher_n+50)",
+    "prototype_residual_shrinkage": "n/(n+64)"
+  },
+  "candidate_grid": {
+    "neighbors": [16, 64],
+    "mode": ["rate", "residual"],
+    "retrieval_amplitude": [0.25, 0.5, 1.0],
+    "parent_gamma": [0.1, 0.25, 0.5],
+    "F_routing": "unchanged exact-C parent",
+    "R_formula_rate": "retrieval=(1-amplitude)*state_prior + amplitude*neighbor_rate",
+    "R_formula_residual": "retrieval=state_prior + amplitude*neighbor_shrunk_residual",
+    "final_formula": "(1-parent_gamma)*exact_C + parent_gamma*retrieval",
+    "selection_order": [
+      "maximize minimum full-score gain over 2020 and 2021",
+      "maximize minimum R-score gain over 2020 and 2021",
+      "maximize mean full-score gain",
+      "prefer fewer neighbors, smaller amplitude and smaller parent gamma"
+    ],
+    "maximum_selected_components": 2
+  },
+  "source_protocol": {
+    "years": [2020, 2021],
+    "latest_label_season_read": 2021,
+    "advance_gate": {
+      "minimum_full_gain_each_year": 25.0,
+      "minimum_R_gain_each_year": 25.0,
+      "full_pitcher_cluster_95_ci_low_each_year": 0.0,
+      "R_pitcher_cluster_95_ci_low_each_year": 0.0
+    },
+    "bootstrap_iterations": 2000,
+    "on_fail": "Close prototype retrieval without reading 2022+ labels.",
+    "on_pass": "Freeze mode, k, amplitudes and all library construction before untouched 2022/2023 development."
+  },
+  "development_protocol_if_source_passes": {
+    "years": [2022, 2023],
+    "required_minimum_full_gain_against_exact_parent_and_both_honest_anchors": 132.11992465293324,
+    "required_same_parent_R_point_and_cluster_ci_low_positive": true,
+    "lock_before_2024": true
+  },
+  "completion": {
+    "source_or_development_metrics_cannot_complete_goal": true,
+    "2024_must_remain_unread_until_recipe_lock": true,
+    "conservative_expected_lb_lower_must_exceed": 1190.0,
+    "actual_submission_is_manual": true
+  },
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json"
+}

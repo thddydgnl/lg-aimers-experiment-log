@@ -1,0 +1,53 @@
+{
+  "experiment_id": "V5_DENSE_PHYSICS_SEED_ENSEMBLE_DEV_LOCK_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_before_2022_2023_candidate_training_or_metrics",
+  "source_evidence": "experiments/results/v5_dense_physics_seed_ensemble_source.json",
+  "recipe": {
+    "exact_parent": "exact component C, random_seed 2026",
+    "seed_bag": "uniform probability mean of exact-C seeds 1, 7, 2026",
+    "dense_physics_raw": "V5_DENSE_PHYSICS_PITCHTYPE_MOE_V1 raw soft expert prediction",
+    "dense_physics_r_blend": "on R: exact_parent + 0.5 * (dense_physics_raw - exact_parent); on F: exact_parent",
+    "final": "0.5 * seed_bag + 0.5 * dense_physics_r_blend",
+    "all_weights_nonnegative": true,
+    "top_level_component_count": 2,
+    "no_development_weight_selection": true
+  },
+  "f_postbreak_preregistration": {
+    "reason": "The final formula changes F only through half of the already-fixed uniform seed-bag direction. No dense expert is applied to F.",
+    "recipe": "F = 0.5 * uniform_seed_bag + 0.5 * exact_parent",
+    "parameters_selected_on_2023_or_2024": false,
+    "required_2023_F_point_gain_positive": true,
+    "required_2023_F_pitcher_cluster_95_ci_lower_positive": true,
+    "on_fail": "Candidate is ineligible and 2024 remains unopened."
+  },
+  "development_application": {
+    "candidate_direction": "final recipe prediction minus exact component C",
+    "baselines": [
+      "exact_parent_C",
+      "v5_honest_m3_r_identity",
+      "v5_honest_m3_r_grid"
+    ],
+    "formula_for_each_baseline": "clip(baseline + candidate_direction, 1e-6, 1-1e-6)",
+    "development_years": [2022, 2023],
+    "confirmation_year_not_read": 2024
+  },
+  "development_gate": {
+    "same_parent_R_point_gain_positive_each_year": true,
+    "same_parent_R_pitcher_cluster_95_ci_lower_positive_each_year": true,
+    "postbreak_2023_F_gate": true,
+    "G_dev": "minimum full-score point gain across both years and all three baselines",
+    "required_G_dev_strictly_greater_than": 132.11992465293324,
+    "on_fail": "Close recipe without training or reading any 2024 candidate.",
+    "on_pass": "Freeze all artifacts and formulas, then train 2024 exactly once for locked confirmation."
+  },
+  "data_contract": {
+    "official_train_and_official_trackman_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "bootstrap_iterations": 2000,
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json"
+}

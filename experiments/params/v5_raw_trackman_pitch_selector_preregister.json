@@ -1,0 +1,58 @@
+{
+  "experiment_id": "V5_RAW_TRACKMAN_PITCH_SELECTOR_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_before_source_selector_metrics",
+  "hypothesis": "A dedicated multiclass model trained on every eligible official historical TrackMan pitch can learn pitcher, batter, team, count, and hand interactions that the main-table-only selector and smoothed frequency profiles miss. Better deployable fine-pitch probabilities can recover materially more of the already measured fine-pitch control oracle.",
+  "source_protocol": {
+    "years": [2020, 2021],
+    "route": "all R rows are predicted; exactly linked current-year auto-pitch labels are used only for selector diagnostics",
+    "history_cutoff": "raw TrackMan and identity mappings use seasons strictly before the target year",
+    "control_success_read_for_selection": false,
+    "locked_parent_selector": "geometric_count_hand__cb0.5 from experiments/params/v5_expanded_matchup_pitch_selector_lock.json",
+    "candidate": "one raw-TrackMan CatBoost recipe geometrically blended with the locked parent selector",
+    "raw_model_weight_grid": [0.25, 0.5, 0.75, 1.0],
+    "ranking": "minimize worst source log-loss, then mean log-loss, then maximize minimum top-1 improvement, then smaller raw-model weight",
+    "gate": {
+      "minimum_log_loss_improvement_over_locked_each_year": 0.005,
+      "minimum_top1_improvement_over_locked_each_year": 0.0,
+      "minimum_raw_training_rows_each_year": 150000,
+      "minimum_mapped_validation_pitcher_fraction_each_year": 0.90
+    },
+    "on_fail": "Close without reading 2022+ selector labels or any control-success metric.",
+    "on_pass": "Freeze the selector blend and preregister one downstream fine-pitch-expert marginalization before reading control-success metrics."
+  },
+  "raw_model": {
+    "family": "CatBoostClassifier MultiClass",
+    "iterations": 600,
+    "depth": 7,
+    "learning_rate": 0.05,
+    "l2_leaf_reg": 30.0,
+    "random_seed": 2026,
+    "loss_function": "MultiClass",
+    "allow_writing_files": false,
+    "numeric_features": [
+      "game_month", "game_dayofweek", "inning", "balls_before",
+      "strikes_before", "outs_before"
+    ],
+    "categorical_features": [
+      "pitcher_tm", "batter_tm", "pitcher_team_code", "batter_team_code",
+      "batter_hand", "top_bottom", "count_state", "hand_matchup",
+      "pitcher_count", "pitcher_hand_count", "pitcher_batter",
+      "pitcher_batter_count", "batter_count", "team_matchup",
+      "pitcher_inning"
+    ],
+    "missing_category": "__unknown__",
+    "identity_minimum_purity": 0.99,
+    "major_team_filter": true
+  },
+  "legality": {
+    "official_train_and_trackman_only": true,
+    "external_data_or_identity_lookup": false,
+    "future_or_current_validation_trackman": false,
+    "current_pitch_type_or_physics_at_inference": false,
+    "other_validation_rows_used_for_prediction": false,
+    "test_rows_read": false,
+    "automatic_dacon_submission": false
+  },
+  "goal_completion_claimed": false
+}

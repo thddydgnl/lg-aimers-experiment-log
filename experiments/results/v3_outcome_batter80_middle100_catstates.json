@@ -1,0 +1,885 @@
+{
+  "metadata": {
+    "stage": "v3_outcome_batter80_middle100_catstates",
+    "created_at_utc": "2026-08-20T02:41:39.228989+00:00",
+    "data": "C:\\Users\\thddy\\Documents\\LG Aimers\\LG Aimers\\open\\data\\train.csv",
+    "models": [
+      "catboost_outcome"
+    ],
+    "features": [
+      "base",
+      "e14",
+      "platoon",
+      "hand_matchup",
+      "count_state",
+      "type_count",
+      "e14_hand_cells",
+      "e14_count_cells",
+      "e14_type_count_cells",
+      "batter_e14",
+      "batter_middle_e14"
+    ],
+    "blend": null,
+    "prior_mode": "r_recent3",
+    "history_window": null,
+    "f_regime_start": null,
+    "season_decay": 1.0,
+    "f_pre_regime_weight": 0.0,
+    "inner_validation": "none",
+    "booster_params": {
+      "iterations": 500,
+      "depth": 6,
+      "learning_rate": 0.05,
+      "l2_leaf_reg": 12.0,
+      "random_seed": 2026
+    },
+    "outcome_scheme": "reverse_any",
+    "booster_device": "gpu",
+    "validation_seasons": [
+      2024
+    ],
+    "protocol": "outer history season < Y; validation season == Y",
+    "row_independent_inference": true,
+    "encoder_cutoff": "season-wise out-of-fold on history; frozen full-history for the fold",
+    "bootstrap_unit": "pitcher_id cluster",
+    "inference_note": "2024 is a development fold; post-selection intervals are exploratory",
+    "smoke_test": false,
+    "versions": {
+      "python": "3.11.9",
+      "numpy": "1.26.4",
+      "pandas": "2.0.3"
+    },
+    "command": "experiments\\run_v2_rolling.py --stage v3_outcome_batter80_middle100_catstates --models catboost_outcome --features base e14 platoon hand_matchup count_state type_count e14_hand_cells e14_count_cells e14_type_count_cells batter_e14 batter_middle_e14 --validation-seasons 2024 --inner-validation none --k-pitcher 50 --k-platoon 50 --batter-e14-k 80 --batter-middle-k 100 --drop-features pitcher_id --outcome-scheme reverse_any --params experiments/params/v3_outcome_seed2026.json --baseline-stage v3_outcome_batter80_middle100 --baseline-key catboost_outcome --bootstrap 300",
+    "elapsed_seconds": 41.98606569999538
+  },
+  "gates": {
+    "catboost_outcome": {
+      "primary_season": 2024,
+      "secondary_season": 2024,
+      "primary_point": 8.125167443216545e-06,
+      "primary_ci": [
+        -2.469902005742866e-05,
+        4.9285922641145335e-05
+      ],
+      "primary_significant": false,
+      "secondary_significantly_worse": false,
+      "recorded_only": [],
+      "gate_pass": false,
+      "gate_definition": "2024 fold clustered CI upper bound < 0 AND 2024 fold clustered CI lower bound <= 0",
+      "confirmatory": false,
+      "interpretation": "Exploratory gate: the 2024 development fold can also be used for configuration selection; final confirmation is leaderboard-only.",
+      "mean_score": 911.4783762009582,
+      "primary_score": 911.4783762009582
+    }
+  },
+  "folds": [
+    {
+      "validation_season": 2024,
+      "history_rows": 1221585,
+      "state_history_rows": 1221585,
+      "fit_history_seasons": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023
+      ],
+      "fit_game_types": [
+        "R",
+        "F"
+      ],
+      "fit_count_states": null,
+      "valid_rows": 253507,
+      "feature_columns": [
+        "season",
+        "game_month",
+        "game_dayofweek",
+        "inning",
+        "top_bottom",
+        "game_type",
+        "balls_before",
+        "strikes_before",
+        "outs_before",
+        "run_top_before",
+        "run_bot_before",
+        "run_total_before",
+        "score_diff_home",
+        "score_diff_pitcher_team",
+        "runner_on_1b",
+        "runner_on_2b",
+        "runner_on_3b",
+        "num_runners_on",
+        "base_state",
+        "home_win_expectancy",
+        "away_win_expectancy",
+        "li",
+        "batter_id",
+        "pitcher_hand",
+        "batter_hand",
+        "pitcher_team_id",
+        "batter_team_id",
+        "asof_pitcher_n",
+        "asof_pitcher_success_rate",
+        "asof_pitcher_reverse_rate",
+        "asof_pitcher_middle_rate",
+        "asof_pitcher_ball_rate",
+        "asof_pitcher_strike_rate",
+        "asof_pitcher_prev1_game_success_rate",
+        "asof_pitcher_prev3_game_success_rate",
+        "asof_pitcher_prev5_game_success_rate",
+        "asof_pitcher_prev1_game_middle_rate",
+        "asof_pitcher_prev3_game_middle_rate",
+        "asof_pitcher_prev5_game_middle_rate",
+        "asof_batter_n",
+        "asof_batter_success_rate",
+        "asof_batter_middle_rate",
+        "asof_pitcher_pitchmix_n",
+        "asof_pitcher_fastball_rate",
+        "asof_pitcher_breaking_rate",
+        "asof_pitcher_offspeed_rate",
+        "e14_n_season",
+        "e14_s_season",
+        "e14_log_n_season",
+        "e14_rate_season",
+        "e14_rate_delta",
+        "e14_n_season_zero",
+        "e14_pitcher_unseen",
+        "e14_counter_invalid",
+        "e30_pitcher_rate",
+        "e30_platoon_delta",
+        "e30_platoon_n_log",
+        "e30_platoon_unseen",
+        "c36_pitcher_hand_batter_hand",
+        "c36_same_hand",
+        "c37_count_state",
+        "c45_game_type_count",
+        "c39_e14_ph1_bh1",
+        "c39_e14_ph1_bh2",
+        "c39_e14_ph2_bh1",
+        "c39_e14_ph2_bh2",
+        "c48_e14_b0s0",
+        "c48_e14_b0s1",
+        "c48_e14_b0s2",
+        "c48_e14_b1s0",
+        "c48_e14_b1s1",
+        "c48_e14_b1s2",
+        "c48_e14_b2s0",
+        "c48_e14_b2s1",
+        "c48_e14_b2s2",
+        "c48_e14_b3s0",
+        "c48_e14_b3s1",
+        "c48_e14_b3s2",
+        "c48_e14_r_b0s0",
+        "c48_e14_r_b0s1",
+        "c48_e14_r_b0s2",
+        "c48_e14_r_b1s0",
+        "c48_e14_r_b1s1",
+        "c48_e14_r_b1s2",
+        "c48_e14_r_b2s0",
+        "c48_e14_r_b2s1",
+        "c48_e14_r_b2s2",
+        "c48_e14_r_b3s0",
+        "c48_e14_r_b3s1",
+        "c48_e14_r_b3s2",
+        "c48_e14_f_b0s0",
+        "c48_e14_f_b0s1",
+        "c48_e14_f_b0s2",
+        "c48_e14_f_b1s0",
+        "c48_e14_f_b1s1",
+        "c48_e14_f_b1s2",
+        "c48_e14_f_b2s0",
+        "c48_e14_f_b2s1",
+        "c48_e14_f_b2s2",
+        "c48_e14_f_b3s0",
+        "c48_e14_f_b3s1",
+        "c48_e14_f_b3s2",
+        "e49_batter_n_season",
+        "e49_batter_s_season",
+        "e49_batter_log_n_season",
+        "e49_batter_rate_season",
+        "e49_batter_rate_delta",
+        "e49_batter_n_season_zero",
+        "e49_batter_unseen",
+        "e49_batter_counter_invalid",
+        "e52_batter_n_season",
+        "e52_batter_log_n_season",
+        "e52_batter_unseen",
+        "e52_batter_middle_rate_season",
+        "e52_batter_middle_rate_delta",
+        "e52_batter_counter_invalid"
+      ],
+      "dropped_features": [
+        "pitcher_id"
+      ],
+      "prior": 0.5065492561807655,
+      "e14_multi": {
+        "enabled": false,
+        "k_values": []
+      },
+      "e14_k": 120.0,
+      "platoon": {
+        "k_pitcher": 50.0,
+        "k_platoon": 50.0,
+        "state_cells": 1413,
+        "state_pitchers": 711,
+        "valid_unseen_rate": 0.19864145763233362
+      },
+      "trackman": {
+        "enabled": false
+      },
+      "e22_probs": {
+        "enabled": false
+      },
+      "components": {
+        "enabled": false
+      },
+      "platoon_centered": {
+        "enabled": false
+      },
+      "pitcher_hand_category": {
+        "enabled": false
+      },
+      "f_regime": {
+        "enabled": false,
+        "break_season": 2023
+      },
+      "hand_matchup": {
+        "enabled": true
+      },
+      "count_state": {
+        "enabled": true
+      },
+      "type_count": {
+        "enabled": true
+      },
+      "type_month": {
+        "enabled": false
+      },
+      "e14_hand_cells": {
+        "enabled": true
+      },
+      "e14_count_cells": {
+        "enabled": true,
+        "game_type_split": true
+      },
+      "rate_hand_cells": {
+        "reverse": false,
+        "fastball": false
+      },
+      "e14_hand_bins": {
+        "rate": false,
+        "n": false
+      },
+      "team_matchup": {
+        "enabled": false
+      },
+      "venue": {
+        "enabled": false,
+        "current_row_only": true
+      },
+      "pitcher_profile": {
+        "enabled": false
+      },
+      "batter_e14": {
+        "enabled": true,
+        "state_batters": 742,
+        "train": {
+          "k": 80.0,
+          "invalid_rows": 0,
+          "unseen_rows": 337783,
+          "n_positive_rate": 0.9983881596450513,
+          "n_median": 574.0
+        },
+        "valid": {
+          "k": 80.0,
+          "invalid_rows": 0,
+          "unseen_rows": 23588,
+          "n_positive_rate": 0.9983274623580414,
+          "n_median": 607.0
+        },
+        "row_independent": true
+      },
+      "batter_e14_interactions": {
+        "count_cells": false,
+        "pitcher_batter": false
+      },
+      "auxiliary_season_components": {
+        "batter_middle": {
+          "enabled": true,
+          "state_batters": 742,
+          "train": {
+            "k": 100.0,
+            "invalid_rows": 0,
+            "unseen_rows": 337783,
+            "n_positive_rate": 0.9993925924106796,
+            "n_median": 574.0,
+            "state_cutoff": "official as-of counters before the final prior-season row"
+          },
+          "valid": {
+            "k": 100.0,
+            "invalid_rows": 0,
+            "unseen_rows": 23588,
+            "n_positive_rate": 0.9996528695460086,
+            "n_median": 608.0,
+            "state_cutoff": "official as-of counters before the final prior-season row"
+          }
+        }
+      },
+      "pitcher_target_encoder": {
+        "enabled": false,
+        "implementation": "sklearn TargetEncoder cross-fit inside model pipeline"
+      },
+      "baseline_models": [
+        "v3_outcome_batter80_middle100:catboost_outcome"
+      ],
+      "baseline_source": "stage",
+      "models": {
+        "catboost_outcome": {
+          "summary": {
+            "n": 253507,
+            "target_rate": 0.4861049201797189,
+            "prediction_mean": 0.4895572786251335,
+            "prediction_std": 0.04792293269114983,
+            "brier": 0.2475299906371477,
+            "reference_brier": 0.24980692675678798,
+            "raw_skill": 0.009114783762009582,
+            "competition_score": 911.4783762009582,
+            "log_loss": 0.6881844628893875,
+            "roc_auc": 0.5536594413165795
+          },
+          "vs_baseline": {
+            "n": 253507,
+            "bootstrap_unit": "cluster",
+            "cluster_count": 391,
+            "confidence": 0.95,
+            "iterations": 300,
+            "point": 8.125167443216545e-06,
+            "ci_low": -2.469902005742866e-05,
+            "ci_high": 4.9285922641145335e-05,
+            "bootstrap_standard_error": 1.954822213747917e-05,
+            "significant": false,
+            "score_point": -3.252578921131041,
+            "score_ci_low": -19.72960609260051,
+            "score_ci_high": 9.887243871934594
+          }
+        }
+      },
+      "fit_details": {
+        "catboost_outcome": {
+          "fit_seconds": 25.406655699996918,
+          "predict_seconds": 1.2671772000030614,
+          "n_iter": 500,
+          "model_params": {
+            "loss_function": "MultiClass",
+            "iterations": 500,
+            "depth": 6,
+            "learning_rate": 0.05,
+            "l2_leaf_reg": 12.0,
+            "random_seed": 2026,
+            "allow_writing_files": false,
+            "thread_count": 6,
+            "task_type": "GPU"
+          },
+          "prediction_std": 0.04792293269114983,
+          "outcome_classes": [
+            "middle",
+            "reverse",
+            "success",
+            "wide"
+          ],
+          "success_class_count": 1,
+          "probability_unweighted_after_class_weighting": false,
+          "outcome_counts": {
+            "success": 648940,
+            "reverse": 274825,
+            "wide": 163050,
+            "middle": 134059
+          },
+          "outcome_usable_rows": 1220874,
+          "outcome_dropped_rows": 711,
+          "outcome_scheme": "reverse_any",
+          "sample_weighted": false,
+          "training_label_source": "next historical same-pitcher as-of counter delta",
+          "feature_importance": [
+            {
+              "feature": "c37_count_state",
+              "importance": 15.058113467870538
+            },
+            {
+              "feature": "season",
+              "importance": 9.038623999744637
+            },
+            {
+              "feature": "game_type",
+              "importance": 6.74111137869311
+            },
+            {
+              "feature": "asof_pitcher_reverse_rate",
+              "importance": 5.660339451691775
+            },
+            {
+              "feature": "c48_e14_b0s2",
+              "importance": 4.66048070635681
+            },
+            {
+              "feature": "strikes_before",
+              "importance": 3.3611306166433006
+            },
+            {
+              "feature": "c45_game_type_count",
+              "importance": 3.208178138526123
+            },
+            {
+              "feature": "c36_same_hand",
+              "importance": 2.853813025835877
+            },
+            {
+              "feature": "e14_rate_season",
+              "importance": 2.6964302449955797
+            },
+            {
+              "feature": "base_state",
+              "importance": 2.6015790868918893
+            },
+            {
+              "feature": "pitcher_team_id",
+              "importance": 2.4863828961740175
+            },
+            {
+              "feature": "balls_before",
+              "importance": 2.4847674180939983
+            },
+            {
+              "feature": "asof_pitcher_middle_rate",
+              "importance": 2.3524186773929174
+            },
+            {
+              "feature": "asof_pitcher_ball_rate",
+              "importance": 2.186193457935906
+            },
+            {
+              "feature": "e30_platoon_delta",
+              "importance": 2.0125804471079776
+            },
+            {
+              "feature": "batter_team_id",
+              "importance": 1.82140377658274
+            },
+            {
+              "feature": "game_month",
+              "importance": 1.7199431760851087
+            },
+            {
+              "feature": "e49_batter_rate_season",
+              "importance": 1.6835334954355121
+            },
+            {
+              "feature": "c48_e14_b1s2",
+              "importance": 1.5614816202453663
+            },
+            {
+              "feature": "e52_batter_middle_rate_season",
+              "importance": 1.4231618073757981
+            },
+            {
+              "feature": "asof_pitcher_breaking_rate",
+              "importance": 1.4226710306380543
+            },
+            {
+              "feature": "asof_pitcher_offspeed_rate",
+              "importance": 1.2490723068401546
+            },
+            {
+              "feature": "outs_before",
+              "importance": 1.1982889415197875
+            },
+            {
+              "feature": "e30_pitcher_rate",
+              "importance": 1.170160866548519
+            },
+            {
+              "feature": "e14_s_season",
+              "importance": 0.9946725738858561
+            },
+            {
+              "feature": "asof_pitcher_fastball_rate",
+              "importance": 0.8977179014809236
+            },
+            {
+              "feature": "asof_pitcher_strike_rate",
+              "importance": 0.8492545036906877
+            },
+            {
+              "feature": "num_runners_on",
+              "importance": 0.8058081818986845
+            },
+            {
+              "feature": "e30_platoon_n_log",
+              "importance": 0.7919450237937824
+            },
+            {
+              "feature": "asof_pitcher_prev1_game_success_rate",
+              "importance": 0.6753307525230293
+            },
+            {
+              "feature": "batter_id",
+              "importance": 0.6741579522900767
+            },
+            {
+              "feature": "asof_pitcher_prev5_game_success_rate",
+              "importance": 0.6653421896305488
+            },
+            {
+              "feature": "asof_pitcher_success_rate",
+              "importance": 0.6584217779088084
+            },
+            {
+              "feature": "batter_hand",
+              "importance": 0.6549138272372076
+            },
+            {
+              "feature": "li",
+              "importance": 0.6361481840631252
+            },
+            {
+              "feature": "asof_pitcher_pitchmix_n",
+              "importance": 0.5951732956661091
+            },
+            {
+              "feature": "c48_e14_r_b0s2",
+              "importance": 0.5880590017871389
+            },
+            {
+              "feature": "asof_pitcher_prev1_game_middle_rate",
+              "importance": 0.5756753251054779
+            },
+            {
+              "feature": "asof_pitcher_prev3_game_middle_rate",
+              "importance": 0.552416510924924
+            },
+            {
+              "feature": "c39_e14_ph1_bh1",
+              "importance": 0.5150812106201413
+            },
+            {
+              "feature": "e14_rate_delta",
+              "importance": 0.4833580526407005
+            },
+            {
+              "feature": "asof_pitcher_prev3_game_success_rate",
+              "importance": 0.46850216044848364
+            },
+            {
+              "feature": "asof_batter_n",
+              "importance": 0.44793852972144343
+            },
+            {
+              "feature": "asof_pitcher_prev5_game_middle_rate",
+              "importance": 0.41619346073690666
+            },
+            {
+              "feature": "c39_e14_ph2_bh2",
+              "importance": 0.38624233329383234
+            },
+            {
+              "feature": "c39_e14_ph2_bh1",
+              "importance": 0.36356925546703134
+            },
+            {
+              "feature": "score_diff_pitcher_team",
+              "importance": 0.362256757375657
+            },
+            {
+              "feature": "c39_e14_ph1_bh2",
+              "importance": 0.35285250568591986
+            },
+            {
+              "feature": "inning",
+              "importance": 0.33427347802685137
+            },
+            {
+              "feature": "e52_batter_middle_rate_delta",
+              "importance": 0.32319752289129855
+            },
+            {
+              "feature": "e49_batter_rate_delta",
+              "importance": 0.322486839806828
+            },
+            {
+              "feature": "run_total_before",
+              "importance": 0.31247548007069953
+            },
+            {
+              "feature": "asof_batter_success_rate",
+              "importance": 0.30772010250495757
+            },
+            {
+              "feature": "away_win_expectancy",
+              "importance": 0.3055342398006306
+            },
+            {
+              "feature": "asof_batter_middle_rate",
+              "importance": 0.2980558936663846
+            },
+            {
+              "feature": "e14_n_season",
+              "importance": 0.25685447707255055
+            },
+            {
+              "feature": "e52_batter_n_season",
+              "importance": 0.24148827416238508
+            },
+            {
+              "feature": "pitcher_hand",
+              "importance": 0.24033488582366339
+            },
+            {
+              "feature": "e49_batter_s_season",
+              "importance": 0.24023402408953484
+            },
+            {
+              "feature": "game_dayofweek",
+              "importance": 0.22596531487755525
+            },
+            {
+              "feature": "home_win_expectancy",
+              "importance": 0.2060349772496073
+            },
+            {
+              "feature": "score_diff_home",
+              "importance": 0.20591930022754948
+            },
+            {
+              "feature": "run_top_before",
+              "importance": 0.16430590804911344
+            },
+            {
+              "feature": "e49_batter_n_season",
+              "importance": 0.14760270626755426
+            },
+            {
+              "feature": "top_bottom",
+              "importance": 0.09422498711238657
+            },
+            {
+              "feature": "run_bot_before",
+              "importance": 0.08018267003016685
+            },
+            {
+              "feature": "c48_e14_r_b0s0",
+              "importance": 0.0670741985829603
+            },
+            {
+              "feature": "c48_e14_b2s1",
+              "importance": 0.06582656563544484
+            },
+            {
+              "feature": "e49_batter_log_n_season",
+              "importance": 0.06181049463673852
+            },
+            {
+              "feature": "c36_pitcher_hand_batter_hand",
+              "importance": 0.05416488906613294
+            },
+            {
+              "feature": "c48_e14_r_b3s2",
+              "importance": 0.05215980619483955
+            },
+            {
+              "feature": "e14_log_n_season",
+              "importance": 0.04239476898839997
+            },
+            {
+              "feature": "c48_e14_r_b0s1",
+              "importance": 0.04022326754749625
+            },
+            {
+              "feature": "c48_e14_r_b2s0",
+              "importance": 0.0361981241396776
+            },
+            {
+              "feature": "c48_e14_r_b2s2",
+              "importance": 0.02751681179843065
+            },
+            {
+              "feature": "c48_e14_r_b1s2",
+              "importance": 0.022599716515342705
+            },
+            {
+              "feature": "runner_on_3b",
+              "importance": 0.020361812426196533
+            },
+            {
+              "feature": "e52_batter_log_n_season",
+              "importance": 0.01824508826906134
+            },
+            {
+              "feature": "c48_e14_b0s1",
+              "importance": 0.01592778450616092
+            },
+            {
+              "feature": "c48_e14_b0s0",
+              "importance": 0.013114707146214724
+            },
+            {
+              "feature": "c48_e14_r_b3s1",
+              "importance": 0.012074548607880447
+            },
+            {
+              "feature": "e49_batter_unseen",
+              "importance": 0.012067146144343071
+            },
+            {
+              "feature": "c48_e14_r_b3s0",
+              "importance": 0.010666139464012464
+            },
+            {
+              "feature": "c48_e14_b3s0",
+              "importance": 0.009956296821848846
+            },
+            {
+              "feature": "c48_e14_f_b0s0",
+              "importance": 0.009841350497786934
+            },
+            {
+              "feature": "asof_pitcher_n",
+              "importance": 0.00982900224151064
+            },
+            {
+              "feature": "c48_e14_b2s2",
+              "importance": 0.009044033439912223
+            },
+            {
+              "feature": "c48_e14_f_b1s2",
+              "importance": 0.00643959335829497
+            },
+            {
+              "feature": "runner_on_1b",
+              "importance": 0.005706972610800806
+            },
+            {
+              "feature": "c48_e14_b3s1",
+              "importance": 0.004692942559069736
+            },
+            {
+              "feature": "c48_e14_r_b2s1",
+              "importance": 0.0022815539697512185
+            },
+            {
+              "feature": "runner_on_2b",
+              "importance": 0.0
+            },
+            {
+              "feature": "e14_n_season_zero",
+              "importance": 0.0
+            },
+            {
+              "feature": "e14_pitcher_unseen",
+              "importance": 0.0
+            },
+            {
+              "feature": "e14_counter_invalid",
+              "importance": 0.0
+            },
+            {
+              "feature": "e30_platoon_unseen",
+              "importance": 0.0
+            },
+            {
+              "feature": "c48_e14_b1s0",
+              "importance": 0.0
+            },
+            {
+              "feature": "c48_e14_b1s1",
+              "importance": 0.0
+            },
+            {
+              "feature": "c48_e14_b2s0",
+              "importance": 0.0
+            },
+            {
+              "feature": "c48_e14_b3s2",
+              "importance": 0.0
+            },
+            {
+              "feature": "c48_e14_r_b1s0",
+              "importance": 0.0
+            },
+            {
+              "feature": "c48_e14_r_b1s1",
+              "importance": 0.0
+            },
+            {
+              "feature": "c48_e14_f_b0s1",
+              "importance": 0.0
+            },
+            {
+              "feature": "c48_e14_f_b0s2",
+              "importance": 0.0
+            },
+            {
+              "feature": "c48_e14_f_b1s0",
+              "importance": 0.0
+            },
+            {
+              "feature": "c48_e14_f_b1s1",
+              "importance": 0.0
+            },
+            {
+              "feature": "c48_e14_f_b2s0",
+              "importance": 0.0
+            },
+            {
+              "feature": "c48_e14_f_b2s1",
+              "importance": 0.0
+            },
+            {
+              "feature": "c48_e14_f_b2s2",
+              "importance": 0.0
+            },
+            {
+              "feature": "c48_e14_f_b3s0",
+              "importance": 0.0
+            },
+            {
+              "feature": "c48_e14_f_b3s1",
+              "importance": 0.0
+            },
+            {
+              "feature": "c48_e14_f_b3s2",
+              "importance": 0.0
+            },
+            {
+              "feature": "e49_batter_n_season_zero",
+              "importance": 0.0
+            },
+            {
+              "feature": "e49_batter_counter_invalid",
+              "importance": 0.0
+            },
+            {
+              "feature": "e52_batter_unseen",
+              "importance": 0.0
+            },
+            {
+              "feature": "e52_batter_counter_invalid",
+              "importance": 0.0
+            }
+          ]
+        }
+      },
+      "sample_weight": {
+        "season_decay": 1.0,
+        "f_pre_regime_weight": 0.0,
+        "fit_game_types": [
+          "R",
+          "F"
+        ],
+        "min": 1.0,
+        "max": 1.0,
+        "effective_rows": 1221585.0
+      },
+      "elapsed_seconds": 38.71370699999534
+    }
+  ]
+}

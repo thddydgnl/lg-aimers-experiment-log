@@ -1,0 +1,152 @@
+{
+  "experiment_id": "V5_EXPANDED_TRACKMAN_DOWNSTREAM_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_before_control_predictions",
+  "hypothesis": "Using all officially supplied historical TrackMan rows that can be mapped at high-purity entity level will reduce profile noise enough to improve exact-C. A broader command bundle is evaluated beside the exact-C feature recipe because stability, trend, platoon, and count summaries may benefit more than the core profile from the 1.5x history expansion.",
+  "frozen_parent": {
+    "name": "exact_C",
+    "model_key": "catboost_outcome",
+    "artifacts": {
+      "2020": "experiments/results/predictions/v4_m3_c_backtest_2020_2020.npz",
+      "2021": "experiments/results/predictions/v4_m3_c_backtest_2021_2021.npz"
+    }
+  },
+  "source_profile_evidence": "experiments/results/v5_expanded_trackman_profiles_source.json",
+  "shared_recipe": {
+    "model": "catboost_outcome",
+    "outcome_scheme": "reverse_any",
+    "inner_validation": "none",
+    "params": "experiments/params/v3_outcome_seed2026.json",
+    "smoothing": {
+      "e14_k": 50,
+      "k_pitcher": 50,
+      "k_platoon": 50,
+      "batter_e14_k": 80,
+      "batter_middle_k": 100,
+      "trackman_trend_window": 2,
+      "trackman_platoon_k": 200,
+      "trackman_count_k": 200
+    },
+    "drop_features": [
+      "pitcher_id",
+      "e58_fastball_rate",
+      "e58_fastball_rel_speed_mean",
+      "e58_fastball_spin_rate_mean",
+      "e58_fastball_induced_vert_break_mean",
+      "e58_fastball_horz_break_mean",
+      "e58_fastball_extension_mean",
+      "e58_fastball_rel_height_mean",
+      "e58_fastball_rel_side_mean",
+      "e58_fastball_zone_speed_mean",
+      "e58_breaking_rate",
+      "e58_breaking_rel_speed_mean",
+      "e58_breaking_spin_rate_mean",
+      "e58_breaking_induced_vert_break_mean",
+      "e58_breaking_horz_break_mean",
+      "e58_breaking_extension_mean",
+      "e58_breaking_rel_height_mean",
+      "e58_breaking_rel_side_mean",
+      "e58_breaking_zone_speed_mean",
+      "e58_offspeed_rate",
+      "e58_offspeed_rel_speed_mean",
+      "e58_offspeed_spin_rate_mean",
+      "e58_offspeed_induced_vert_break_mean",
+      "e58_offspeed_horz_break_mean",
+      "e58_offspeed_extension_mean",
+      "e58_offspeed_rel_height_mean",
+      "e58_offspeed_rel_side_mean",
+      "e58_offspeed_zone_speed_mean",
+      "e58_other_rate",
+      "e58_other_rel_speed_mean",
+      "e58_other_spin_rate_mean",
+      "e58_other_induced_vert_break_mean",
+      "e58_other_horz_break_mean",
+      "e58_other_extension_mean",
+      "e58_other_rel_height_mean",
+      "e58_other_rel_side_mean",
+      "e58_other_zone_speed_mean"
+    ]
+  },
+  "arms": {
+    "core": {
+      "stage_stem": "v5_expanded_trackman_core_source",
+      "features": [
+        "base",
+        "e14",
+        "platoon",
+        "hand_matchup",
+        "e14_hand_cells",
+        "e14_count_cells",
+        "e14_type_count_cells",
+        "trackman_rich",
+        "batter_e14",
+        "batter_middle_e14",
+        "expanded_trackman_profiles"
+      ],
+      "required_trackman_prefixes": ["e58_"]
+    },
+    "command_bundle": {
+      "stage_stem": "v5_expanded_trackman_command_source",
+      "features": [
+        "base",
+        "e14",
+        "platoon",
+        "hand_matchup",
+        "e14_hand_cells",
+        "e14_count_cells",
+        "e14_type_count_cells",
+        "trackman_rich",
+        "trackman_stability",
+        "trackman_group_stability",
+        "trackman_trend",
+        "trackman_platoon",
+        "trackman_count",
+        "batter_e14",
+        "batter_middle_e14",
+        "expanded_trackman_profiles"
+      ],
+      "required_trackman_prefixes": ["e58_", "e74_", "e76_", "e75_", "e59_", "e71_"]
+    }
+  },
+  "source_protocol": {
+    "years": [2020, 2021],
+    "years_forbidden_until_source_pass": [2022, 2023, 2024],
+    "routing": "candidate on game_type R only; frozen exact-C on F",
+    "top_level_blend_grid": [0.25, 0.5, 0.75, 1.0],
+    "selection_order": [
+      "maximum minimum_R_gain",
+      "maximum minimum_full_gain",
+      "maximum mean_R_gain",
+      "smaller gamma",
+      "core before command_bundle on an exact numerical tie"
+    ],
+    "bootstrap_iterations": 2000,
+    "gate": {
+      "minimum_R_gain_each_year": 25.0,
+      "minimum_full_gain_each_year": 0.0,
+      "R_pitcher_cluster_95_ci_lower_strictly_positive_each_year": true,
+      "full_pitcher_cluster_95_ci_lower_strictly_positive_each_year": true
+    }
+  },
+  "semantic_gate": {
+    "expanded_profile_source_status": "source_pass",
+    "minimum_row_expansion_factor_each_year": 1.5,
+    "minimum_identity_purity": 0.99,
+    "minimum_mapped_pitchers": 200,
+    "profile_aggregation_only": true,
+    "target_columns_read": false,
+    "current_validation_trackman_used": false,
+    "external_data_used": false,
+    "all_declared_feature_prefixes_present": true,
+    "exact_drop_list_preserved": true
+  },
+  "advance_rule": "Only the single selected arm and gamma may advance to the locked 2022/2023 development gate if every source gate requirement passes. Otherwise close this direction without reading 2022+ labels.",
+  "data_contract": {
+    "official_train_and_trackman_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "future_or_current_validation_trackman": false,
+    "automatic_dacon_submission": false
+  },
+  "goal_completion_claimed": false
+}

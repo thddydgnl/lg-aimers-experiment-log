@@ -1,0 +1,136 @@
+{
+  "experiment_id": "V5_PREVYEAR_LOSS_GATE_V1",
+  "status": "locked_before_source_search",
+  "created_at_kst": "2026-08-22",
+  "hypothesis": "The direct current-season Bayesian update is directionally useful but its optimal strength changes by row and season. A shallow gate fitted only on the immediately previous completed season can learn stable row-local regions and blend strengths, then transfer unchanged one year forward.",
+  "competition_scope": {
+    "allowed_inputs": [
+      "official train.csv rows from completed seasons",
+      "frozen M3 probability",
+      "direct current-season update probability and its row-local reconstructed n_current/s_current",
+      "official row-local pre-pitch columns"
+    ],
+    "forbidden": [
+      "evaluation-row aggregation, order, count, or distribution",
+      "2025 TrackMan",
+      "future labels",
+      "external data or APIs",
+      "automatic DACON submission"
+    ],
+    "evaluation_inference_is_row_independent": true
+  },
+  "components": {
+    "parent": "v5 honest/published M3 anchor for the target fold",
+    "alternate": "V5_DIRECT_SEASON_UPDATE anchor_posterior with k_R=500; F is never changed",
+    "component_count_for_contract": 2,
+    "nonnegative_convex_formula": "parent + gate_weight(row) * (alternate - parent), with 0 <= gate_weight <= 1"
+  },
+  "temporal_protocol": {
+    "source_fit_season": 2020,
+    "source_validation_season": 2021,
+    "development_fit_season": 2021,
+    "development_validation_season": 2022,
+    "second_development_fit_season": 2022,
+    "second_development_validation_season": 2023,
+    "sealed_confirmation_fit_season": 2023,
+    "sealed_confirmation_validation_season": 2024,
+    "deployment_fit_season": 2024,
+    "deployment_target_season": 2025,
+    "rule": "For target season Y, fit the tree partition and leaf blend weights using only season Y-1 labels/predictions, then transfer them unchanged to every target row. F rows always retain parent."
+  },
+  "tree_target": "per-row direct-vs-parent squared-loss advantage: (parent-y)^2 - (alternate-y)^2",
+  "leaf_weight_fit": {
+    "grid": [0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0],
+    "objective": "minimum Brier loss within each training leaf",
+    "global_shrink_grid": [0.25, 0.5, 0.75, 1.0],
+    "target_application": "selected shrink times source-fitted leaf weight; clipped to [0,1]"
+  },
+  "feature_sets": {
+    "prediction": [
+      "parent_prediction",
+      "alternate_prediction",
+      "prediction_delta",
+      "abs_prediction_delta"
+    ],
+    "state": [
+      "parent_prediction",
+      "alternate_prediction",
+      "prediction_delta",
+      "abs_prediction_delta",
+      "log1p_n_current",
+      "direct_reliability_k500",
+      "current_success_rate",
+      "current_minus_career_success",
+      "log1p_asof_pitcher_n",
+      "asof_pitcher_success_rate",
+      "game_month"
+    ],
+    "context": [
+      "parent_prediction",
+      "alternate_prediction",
+      "prediction_delta",
+      "abs_prediction_delta",
+      "log1p_n_current",
+      "direct_reliability_k500",
+      "current_success_rate",
+      "current_minus_career_success",
+      "log1p_asof_pitcher_n",
+      "asof_pitcher_success_rate",
+      "asof_pitcher_reverse_rate",
+      "asof_pitcher_middle_rate",
+      "asof_pitcher_ball_rate",
+      "asof_pitcher_strike_rate",
+      "asof_pitcher_prev1_game_success_rate",
+      "asof_pitcher_prev3_game_success_rate",
+      "asof_pitcher_prev5_game_success_rate",
+      "asof_pitcher_prev1_game_middle_rate",
+      "asof_pitcher_prev3_game_middle_rate",
+      "asof_pitcher_prev5_game_middle_rate",
+      "game_month",
+      "inning",
+      "balls_before",
+      "strikes_before",
+      "outs_before",
+      "li",
+      "pitcher_hand",
+      "batter_hand"
+    ]
+  },
+  "search_grid": {
+    "feature_set": ["prediction", "state", "context"],
+    "max_depth": [1, 2, 3],
+    "min_samples_leaf": [10000, 25000, 50000],
+    "global_shrink": [0.25, 0.5, 0.75, 1.0],
+    "random_state": 8222026,
+    "criterion": "squared_error"
+  },
+  "source_ranking": [
+    "maximum 2021 R score gain",
+    "maximum 2021 routed-full score gain",
+    "maximum 2020 R in-sample score gain",
+    "lower max_depth",
+    "larger min_samples_leaf",
+    "lexicographic feature_set",
+    "lower global_shrink"
+  ],
+  "source_gate": {
+    "minimum_2021_R_point_gain": 60.0,
+    "minimum_2021_routed_full_point_gain": 50.0,
+    "R_pitcher_cluster_95_ci_lower_strictly_positive": true,
+    "routed_full_pitcher_cluster_95_ci_lower_strictly_positive": true,
+    "minimum_2021_changed_R_fraction": 0.05,
+    "maximum_leaf_count": 8
+  },
+  "development_gate": {
+    "required_2022_R_and_full_point_gain_strictly_greater_than": 132.11992465293324,
+    "required_2022_R_and_full_pitcher_cluster_95_ci_lower_strictly_positive": true,
+    "if_failed": "close family without reading or generating its 2023/2024 composite"
+  },
+  "confirmation_and_completion": {
+    "2023_required_before_2024": true,
+    "2024_is_sealed_for_this_new_composite": true,
+    "completion_contract": "experiments/params/v5_validation_contract_v2.json",
+    "goal_completion_requires_conservative_expected_lower_strictly_above": 1190.0,
+    "actual_submission_is_manual": true
+  }
+}

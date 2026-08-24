@@ -1,0 +1,98 @@
+{
+  "experiment_id": "V5_PRIVILEGED_TRACKMAN_DISTILL_C_V1",
+  "created_at_kst": "2026-08-21",
+  "status": "locked_before_teacher_score_generation",
+  "depends_on": {
+    "experiment": "V5_PRIVILEGED_TRACKMAN_TEACHER_FEASIBILITY_V1",
+    "required_status": "passed_proceed_to_history_only_distillation",
+    "artifact": "experiments/results/v5_privileged_trackman_teacher_feasibility.json"
+  },
+  "scope": {
+    "development_years": [2022, 2023],
+    "locked_confirmation_year": 2024,
+    "deployment_year": 2025,
+    "game_type_route": "Use the augmented model on R rows only; preserve exact parent C predictions on F rows.",
+    "candidate_complexity": "one CatBoost outcome recipe with one fixed deterministic feature bundle"
+  },
+  "data_rules": {
+    "official_train_and_trackman_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "current_or_validation_trackman_at_inference": false,
+    "test_row_aggregation": false,
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "teacher_scoring": {
+    "development_source_seasons": [2020, 2021, 2022],
+    "history_rule": "For completed source season S, fit both teachers on matched R rows with season strictly less than S and score S using its now-historical TrackMan physics.",
+    "source_labels_used_for_teacher_fit_or_profile": false,
+    "teacher_models": "exact control and physics_teacher recipes from V5_PRIVILEGED_TRACKMAN_TEACHER_FEASIBILITY_V1",
+    "stored_values": ["physics_teacher_probability", "control_teacher_probability"],
+    "confirmation_rule": "Do not generate source-season 2023 teacher scores unless the 2022/2023 development gate passes and the recipe is locked."
+  },
+  "profile_features": {
+    "source_cutoff": "teacher-scored completed seasons strictly before each modeled row season",
+    "season_centering": [
+      "physics_teacher_probability minus its source-season mean",
+      "physics_teacher_probability minus control_teacher_probability, then minus its source-season mean"
+    ],
+    "fixed_smoothing": {
+      "pitcher_level_k": 200.0,
+      "pitcher_recent_to_level_k": 100.0,
+      "pitcher_pitch_group_to_level_k": 100.0,
+      "pitcher_count_pitchmix_to_overall_k": 100.0
+    },
+    "bundle": [
+      "e80_teacher_full_all",
+      "e80_teacher_full_recent",
+      "e80_teacher_full_context",
+      "e80_teacher_delta_all",
+      "e80_teacher_delta_recent",
+      "e80_teacher_delta_context",
+      "e80_teacher_profile_n_log",
+      "e80_teacher_recent_n_log",
+      "e80_teacher_unseen"
+    ]
+  },
+  "exact_parent": {
+    "stage": "v3_sparse_c_backtest",
+    "model_key": "catboost_outcome",
+    "features": [
+      "base",
+      "e14",
+      "platoon",
+      "hand_matchup",
+      "e14_hand_cells",
+      "e14_count_cells",
+      "e14_type_count_cells",
+      "trackman_rich",
+      "batter_e14",
+      "batter_middle_e14"
+    ],
+    "params": "experiments/params/v3_outcome_seed2026.json",
+    "outcome_scheme": "reverse_any",
+    "inner_validation": "none",
+    "fixed_hyperparameters": {
+      "e14_k": 50.0,
+      "k_pitcher": 50.0,
+      "k_platoon": 50.0,
+      "batter_e14_k": 80.0,
+      "batter_middle_k": 100.0
+    },
+    "drop_features": "exact list recorded in experiments/results/v3_sparse_c_backtest.json"
+  },
+  "candidate_change": "Add only trackman_teacher to the exact parent feature list; hold all model parameters, drops, training rows, seeds, and routing fixed.",
+  "development_gate": {
+    "bootstrap": "pitcher-cluster 95% interval, 1000 fixed-seed replicates in final selector",
+    "requirements": [
+      "positive R point gain over exact parent C in both 2022 and 2023",
+      "positive R 95% gain lower bound over exact parent C in both 2022 and 2023",
+      "positive routed-full point gain over exact parent C in both 2022 and 2023",
+      "positive R point gain over both required honest R anchors in both 2022 and 2023"
+    ],
+    "on_fail": "reject without generating 2023 teacher scores or running 2024",
+    "on_pass": "freeze the exact recipe and generate only the deterministic source-2023 scores needed for locked 2024 confirmation"
+  },
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json"
+}

@@ -1,0 +1,44 @@
+{
+  "experiment_id": "V5_RECENT_NEURAL_DENSE_MULTITASK_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_before_recent_2021_metrics",
+  "adaptive_origin_disclosed": true,
+  "hypothesis": "Neural multitask gain was strong when 2020 trained on only 2019 (+58.37 R) but vanished when 2021 pooled 2019 and 2020 (+2.43 R). Failure-bit and pitch-group relationships are transition-local, so a fixed immediately-previous-season training window should retain the shared-representation signal instead of averaging incompatible seasons.",
+  "prior_evidence": {
+    "2020_all_available_equals_one_year_R_gain": 58.36873604642136,
+    "2021_all_history_R_gain": 2.426764185914294,
+    "all_history_failure_report": "experiments/results/v5_neural_dense_multitask_source2021_gate.json"
+  },
+  "locked_recipe": {
+    "model": "tabm_dense_multitask",
+    "params": "experiments/params/v5_neural_dense_multitask_tabm.json",
+    "history_window_seasons": 1,
+    "history_game_type": "R",
+    "gamma": 0.25,
+    "gamma_reselection_allowed": false,
+    "route": "R only; exact C on F",
+    "features_and_heads": "identical to V5_NEURAL_DENSE_MULTITASK_V1"
+  },
+  "protocol": {
+    "source_rows": {
+      "2020": "reuse immutable prior result because all available history is exactly 2019",
+      "2021": "fresh retrain on 2020 R only"
+    },
+    "source_gate_2021": {
+      "minimum_R_gain": 50.0,
+      "minimum_full_gain": 0.0,
+      "R_and_full_pitcher_cluster_95_ci_lower_positive": true
+    },
+    "if_source_pass": "Freeze unchanged recipe before fresh 2022 and 2023 development; because window choice was motivated by viewed 2021 failure, neither 2020 nor 2021 alone can complete the Goal.",
+    "development_gate": "Both 2022 and 2023 must have R gain >=50 and positive R/full CI lower bounds at fixed gamma 0.25.",
+    "confirmation": "2024 remains unopened until the fixed development gate passes."
+  },
+  "data_contract": {
+    "official_train_and_trackman_only": true,
+    "external_data_or_api": false,
+    "future_labels_or_future_trackman": false,
+    "test_rows_read": false,
+    "automatic_dacon_submission": false
+  },
+  "goal_completion_claimed": false
+}

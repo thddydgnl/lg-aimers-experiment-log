@@ -1,0 +1,51 @@
+{
+  "experiment_id": "V5_DENSE_PHYSICS_PITCHTYPE_MOE_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "preregistered_before_source_metrics",
+  "hypothesis": "Dense pitch-group experts have stable positive source gain and large true-group headroom, but the first dense expert recipe deliberately removed every group-specific TrackMan profile to match exact C. Giving each expert only its own completed-history group physics profile may improve its conditional control probability without exposing current-pitch TrackMan.",
+  "relationship_to_prior_work": {
+    "dense_moe_parent": "V5_DENSE_PITCHTYPE_MOE_V1 trained full dense experts with exact-C features after dropping all e58 group-specific physics columns.",
+    "trackman_global_failures": "Prior global/LUPI/archetype directions did not combine a dense known-group training expert with only that group's frozen physics profile.",
+    "new_information_path": "expert identity supplies the historical group; that expert receives only e58_<same_group>_* completed-history columns."
+  },
+  "data_contract": {
+    "official_train_and_official_trackman_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "source_validation_seasons": [2020, 2021],
+    "latest_control_label_season_used_for_source_metrics": 2021,
+    "history_rule": "season strictly before validation season",
+    "physics_cutoff": "official TrackMan matched R rows with season strictly before the predicted row season",
+    "current_pitch_group_at_inference": false,
+    "current_pitch_trackman_at_inference": false,
+    "other_validation_or_test_rows_at_inference": false,
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "candidate": {
+    "groups": ["fastball", "breaking", "offspeed"],
+    "selector": "dense counter-label CatBoost with row-local e53 K20 state and all frozen group physics profiles",
+    "experts": "three reverse_any CatBoost experts; common exact-C features plus only the matching e58 group-specific profile",
+    "top_level_blend_grid": [0.25, 0.5, 0.75, 1.0],
+    "blend_formula": "F remains exact parent; R = parent + gamma * (dense physics MoE - parent)",
+    "selection": "maximize minimum full gain across 2020/2021, then minimum R gain, then smaller gamma"
+  },
+  "semantic_gate": {
+    "minimum_history_label_coverage_each_year": 0.995,
+    "minimum_trackman_group_agreement_each_year": 0.90
+  },
+  "source_gate": {
+    "minimum_full_gain_each_year": 25.0,
+    "minimum_r_gain_each_year": 25.0,
+    "pitcher_cluster_95_ci_lower_positive_full_each_year": true,
+    "pitcher_cluster_95_ci_lower_positive_r_each_year": true,
+    "on_fail": "Close without reading 2022+ candidate labels.",
+    "on_pass": "Freeze gamma and recipe before 2022/2023; open 2024 only after both development and honest-anchor gates pass."
+  },
+  "diagnostic_oracle": {
+    "true_reconstructed_validation_group": true,
+    "goal_gate_eligible": false
+  },
+  "bootstrap_iterations": 2000,
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json"
+}

@@ -1,0 +1,70 @@
+{
+  "experiment_id": "V5_HGB_STATE_CONTEXT_V1",
+  "created_at_kst": "2026-08-21",
+  "status": "locked_before_execution",
+  "purpose": "Test whether the already legal current-season state decomposition and explicit context products transfer when learned by a strongly regularized low-capacity HGB instead of the previously tested CatBoost family.",
+  "novelty_audit": {
+    "existing_current_state_runs": "current_state_full/context/level were tested with CatBoost and CatBoost-outcome only",
+    "existing_hgb_runs": "HGB runs used base/e14 or prior-decay/player encodings, not the full D plus X/H1 current-state bundle",
+    "external_research_boundary": "A public implementation motivated the model-family hypothesis only. No external data, predictions, model artifacts, or copied source code enter this experiment."
+  },
+  "data_rules": {
+    "official_train_and_trackman_only": true,
+    "external_data_or_api": false,
+    "fit_game_type": "R only because the official evaluation route is R",
+    "history_rule": "season strictly before target year for labels, state priors, and TrackMan profiles",
+    "test_rows_read": false,
+    "test_row_aggregation": false,
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "folds": {
+    "development_targets": [2022, 2023],
+    "locked_confirmation": 2024,
+    "deployment": 2025
+  },
+  "fixed_model": {
+    "family": "sklearn HistGradientBoostingClassifier",
+    "params_file": "experiments/params/v5_hgb_state_context_fixed.json",
+    "single_recipe_no_search": true,
+    "inner_validation": "none",
+    "trackman_platoon_k": 200.0,
+    "trackman_count_k": 200.0,
+    "prediction_calibration": "none"
+  },
+  "structural_ablation": {
+    "exact_parent_stage": "v5_hgb_context_parent_dev2223",
+    "parent_features": [
+      "base",
+      "trackman_platoon",
+      "trackman_count"
+    ],
+    "candidate_stage": "v5_hgb_state_context_dev2223",
+    "candidate_features": [
+      "base",
+      "trackman_platoon",
+      "trackman_count",
+      "current_state_context",
+      "current_state_level"
+    ],
+    "candidate_only_change": "Add the deterministic 13 raw current-season state values, eight success/middle context products, and six ball/reverse/strike level products.",
+    "trackman_features_retained": [
+      "platoon rel_speed delta",
+      "platoon fastball/breaking/offspeed rate deltas",
+      "count fastball/breaking/offspeed rate deltas"
+    ],
+    "all_model_parameters_and_training_rows_held_fixed": true
+  },
+  "development_gate": {
+    "primary_metric": "paired normalized R Brier gain of candidate over exact HGB parent",
+    "uncertainty": "pitcher-cluster bootstrap 95% interval with 1000 fixed-seed replicates",
+    "requirements": [
+      "positive R point gain over exact parent in both 2022 and 2023",
+      "positive R 95% gain lower bound over exact parent in both 2022 and 2023",
+      "positive R point gain over both honest R anchors in both 2022 and 2023"
+    ],
+    "on_fail": "reject this HGB state/context recipe without running 2024",
+    "on_pass": "freeze this exact recipe, then run 2024 once and test convex blending against exact C and both honest anchors"
+  },
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json"
+}

@@ -1,0 +1,54 @@
+{
+  "experiment_id": "V5_GAME_PAIRWISE_RANK_V1",
+  "status": "locked_before_source_metrics",
+  "locked_at_kst": "2026-08-22",
+  "hypothesis": "Pairwise ranking of success versus failure rows within each labelled historical game cancels the unobservable game intercept more directly than centered absolute-probability regression and may recover temporally stable row-level ordering.",
+  "prior_disclosure": "The separately preregistered game-centered RMSE source experiment failed. No pairwise predictions or metrics existed when this recipe was locked.",
+  "legality": {
+    "official_open_data_only": true,
+    "historical_game_groups_and_labels_used_only_during_training": true,
+    "validation_or_test_grouping": false,
+    "test_aggregation": false,
+    "row_independent_inference": true,
+    "future_labels": false,
+    "external_api_or_data": false
+  },
+  "model": {
+    "parent": "exact-C catboost_outcome",
+    "route": "R only; F remains exact-C",
+    "features": "exact-C feature recipe",
+    "fit_rows": "historical R rows in games containing both target classes",
+    "loss": "CatBoost PairLogitPairwise",
+    "normalization": "subtract training raw-score mean, divide by training raw-score standard deviation, clip z to +/-4, multiply by 0.05",
+    "params_path": "experiments/params/v5_game_pairwise_rank_model.json"
+  },
+  "source_protocol": {
+    "years": [2020, 2021],
+    "years_2022_2023_2024_unread_for_pairwise_selection": true,
+    "blend_formula_on_R": "clip(parent + gamma * (rank_prediction - 0.5))",
+    "blend_grid": [0.05, 0.1, 0.2, 0.35, 0.5, 0.75, 1.0],
+    "selection_order": [
+      "maximize minimum full-score gain across source years",
+      "maximize minimum R-score gain across source years",
+      "maximize mean full-score gain",
+      "prefer smaller gamma"
+    ],
+    "advance_gate": {
+      "minimum_full_gain_each_year": 50.0,
+      "minimum_R_gain_each_year": 50.0,
+      "full_pitcher_cluster_95_ci_low_each_year": 0.0,
+      "R_pitcher_cluster_95_ci_low_each_year": 0.0
+    }
+  },
+  "development_protocol_if_source_passes": {
+    "years": [2022, 2023],
+    "gamma": "locked source selection",
+    "required_minimum_full_gain_against_exact_parent_and_both_honest_anchors": 132.11992465293324,
+    "lock_before_2024": true
+  },
+  "completion": {
+    "source_or_development_metrics_cannot_complete_goal": true,
+    "2024_must_remain_unread_until_recipe_lock": true,
+    "actual_submission_is_manual": true
+  }
+}

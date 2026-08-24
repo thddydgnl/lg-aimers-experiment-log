@@ -1,0 +1,45 @@
+{
+  "experiment_id": "V5_BATTER_TRACKMAN_RICH_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_before_source_model_fit",
+  "hypothesis": "Completed-season TrackMan profiles of the pitches a batter is offered encode target-free pitch-selection and approach information that is absent from exact C's pitcher-only physical profile. Overall, pitcher-hand-conditional, and count-conditional batter profiles may improve R control probabilities without observing the current pitch.",
+  "data_rules": {
+    "official_train_and_trackman_only": true,
+    "external_data": false,
+    "test_rows": false,
+    "current_pitch_trackman": false,
+    "validation_or_future_trackman": false,
+    "identity_mapping_cutoff": "exact linkage rows with season strictly before the query season",
+    "profile_cutoff": "raw TrackMan rows with season strictly before the query season",
+    "row_independent": true
+  },
+  "source_folds": [2020, 2021],
+  "unopened_folds_for_this_gate": [2022, 2023, 2024],
+  "parent": {
+    "recipe": "exact C seed 2026",
+    "prediction_stage": "v5_exact_c_multiseed_source",
+    "prediction_key": "parent_exact_c"
+  },
+  "candidate": {
+    "model": "exact C CatBoost MultiClass reverse_any, unchanged 500/depth6/lr0.05/l2=12/seed2026",
+    "added_feature_family": "trackman_batter_rich",
+    "overall": "batter sample size, four pitch-group rates, and mean/std for eight physical measurements",
+    "pitcher_hand_condition": "K=80 shrinkage of four pitch-group rates and eight physical means toward each batter overall profile",
+    "count_condition": "K=120 shrinkage of four pitch-group rates toward each batter overall profile",
+    "raw_pitcher_id": "dropped exactly as in parent C"
+  },
+  "route_and_selection": {
+    "route": "R only; F remains exact parent",
+    "gamma_grid": [0.25, 0.5, 0.75, 1.0],
+    "selection": "maximize the minimum R score gain over 2020 and 2021; ties use median R gain then smaller gamma"
+  },
+  "source_gate": {
+    "minimum_full_point_gain_each_year": 15.0,
+    "minimum_R_point_gain_each_year": 15.0,
+    "R_pitcher_cluster_95pct_gain_lower_bound_each_year": 0.0,
+    "feature_row_order_invariance_max_abs": 0.0,
+    "on_pass": "freeze gamma and rerun the identical recipe on 2022 and 2023",
+    "on_fail": "close batter TrackMan profile axis before opening 2022+"
+  },
+  "goal_completion": "This source gate can never complete the Goal."
+}

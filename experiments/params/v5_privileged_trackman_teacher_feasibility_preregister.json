@@ -1,0 +1,74 @@
+{
+  "experiment_id": "V5_PRIVILEGED_TRACKMAN_TEACHER_FEASIBILITY_V1",
+  "created_at_kst": "2026-08-21",
+  "status": "locked_before_execution",
+  "purpose": "Test the necessary condition for a legal privileged-information distillation: whether official historical post-pitch TrackMan physics predicts control_success beyond pitch identity and pre-pitch context out of time.",
+  "candidate_status": "diagnostic_only_not_submission_eligible",
+  "data_rules": {
+    "official_train_and_trackman_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "2024_rows_read": false,
+    "target_year_trackman_use": "diagnostic scoring only; never an inference feature",
+    "identifiers_used_as_features": false
+  },
+  "folds": {
+    "development_targets": [2021, 2022, 2023],
+    "history_rule": "regular-season matched rows with season strictly before target year",
+    "locked_confirmation": 2024
+  },
+  "models": {
+    "control": {
+      "features": [
+        "balls_before",
+        "strikes_before",
+        "outs_before",
+        "pitcher_hand",
+        "batter_hand",
+        "pitch_type_group",
+        "tagged_pitch_type",
+        "auto_pitch_type"
+      ]
+    },
+    "physics_teacher": {
+      "features_added_to_control": [
+        "rel_speed",
+        "spin_rate",
+        "induced_vert_break",
+        "horz_break",
+        "extension",
+        "rel_height",
+        "rel_side",
+        "zone_speed"
+      ]
+    },
+    "estimator": {
+      "family": "LightGBM binary classifier",
+      "n_estimators": 300,
+      "learning_rate": 0.04,
+      "num_leaves": 31,
+      "max_depth": -1,
+      "min_child_samples": 400,
+      "subsample": 1.0,
+      "colsample_bytree": 1.0,
+      "reg_alpha": 1.0,
+      "reg_lambda": 20.0,
+      "random_state": 20260821,
+      "n_jobs": 6
+    }
+  },
+  "metrics": {
+    "primary": "paired Brier gain of physics_teacher over control, normalized with the target-fold R rate",
+    "secondary": ["log_loss", "roc_auc"],
+    "uncertainty": "pitcher-cluster bootstrap 95% lower bound with 1000 fixed-seed replicates"
+  },
+  "proceed_gate": {
+    "requirements": [
+      "positive normalized paired Brier gain in 2021, 2022, and 2023",
+      "positive pitcher-cluster 95% gain lower bound in at least two of the three years",
+      "positive ROC-AUC delta in 2021, 2022, and 2023"
+    ],
+    "on_pass": "preregister a separate history-only teacher-profile distillation on 2022 and 2023; current/validation TrackMan remains unavailable to that candidate",
+    "on_fail": "reject privileged TrackMan teacher direction without reading 2024"
+  }
+}

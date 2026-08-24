@@ -1,0 +1,72 @@
+{
+  "experiment_id": "V5_FIXED_R_BASERATE_TREND_V1",
+  "status": "preregistered_before_development_score_computation",
+  "created_local_date": "2026-08-21",
+  "hypothesis": "The exact component-C family and honest M3 anchors inherit a recent-history R prior but cannot extrapolate the league-wide within-pitcher decline. A fixed train-label-only logit offset from a damped R-season trend may correct that shared one-year-ahead calibration error without reading or aggregating target rows.",
+  "external_research_boundary": {
+    "method_only": true,
+    "external_data_used": false,
+    "external_models_or_predictions_used": false,
+    "source_observation": "A lower-scoring public implementation used a 0.75-damped annual base-rate trend. Its batch-mean target matching is not adopted because this project forbids target-batch aggregation; only the historical-label trend constant is retained."
+  },
+  "data_contract": {
+    "official_open_train_only": true,
+    "test_rows_read": false,
+    "target_year_labels_used_to_build_offset": false,
+    "target_prediction_mean_or_distribution_used": false,
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "fold_protocol": {
+    "development_order": [2022, 2023],
+    "locked_confirmation": 2024,
+    "deployment_target": 2025,
+    "confirmation_file_must_not_be_loaded_until_both_development_years_pass": true
+  },
+  "fixed_recipe": {
+    "route": "R_only_F_unchanged",
+    "phi": 0.75,
+    "historical_rate_scope": "official R rows by season, seasons strictly before target Y",
+    "forecast": "r_hat_Y = r_(Y-1) + 0.75 * mean(r_t - r_(t-1)) over all available consecutive historical R seasons before Y",
+    "reference_prior": "q_Y = row-weighted R target mean over the most recent three seasons strictly before Y",
+    "offset": "delta_Y = logit(r_hat_Y) - logit(q_Y)",
+    "application": "for each R row independently, p_new = sigmoid(logit(p_parent) + delta_Y); each F row remains p_parent",
+    "clipping": [1e-06, 0.999999],
+    "free_or_selected_coefficients": 0,
+    "forbidden_variant": "Do not solve an offset from the mean, labels, order, distribution, or any aggregate of target/test predictions."
+  },
+  "parents": {
+    "exact_component_C": {
+      "2022_2023_stem": "v3_sparse_c_backtest",
+      "2024_stem": "v3_outcome_trackmanrich_overall_e14k50_batter80_middle100",
+      "key": "catboost_outcome"
+    },
+    "honest_r_identity": {
+      "stem": "v5_honest_m3_r_identity",
+      "key": "final_prediction"
+    },
+    "honest_r_grid": {
+      "stem": "v5_honest_m3_r_grid",
+      "key": "final_prediction"
+    }
+  },
+  "development_gate": {
+    "required_for_every_parent_and_each_development_year": [
+      "R score gain > 0",
+      "pitcher-cluster bootstrap 95% R gain lower bound > 0",
+      "full score gain > 0"
+    ],
+    "bootstrap_iterations": 2000,
+    "if_2022_fails": "stop without reading 2023 or 2024",
+    "if_2023_fails": "stop without reading 2024",
+    "if_both_pass": "lock the unchanged formula and open 2024 exactly once"
+  },
+  "goal_gate": {
+    "actual_anchor": 1090.9100565103,
+    "haircut": 0.75,
+    "required_raw_robust_gain": 132.11992465293324,
+    "G_robust": "minimum of development full-score gains, locked 2024 full-score gains, and locked 2024 pitcher-cluster 95% full-score gain lower bounds across all parents",
+    "expected_lb_lower": "1090.9100565103 + 0.75 * max(0, G_robust)",
+    "pass": "expected_lb_lower > 1190 or an actual user-reported DACON score > 1190"
+  }
+}

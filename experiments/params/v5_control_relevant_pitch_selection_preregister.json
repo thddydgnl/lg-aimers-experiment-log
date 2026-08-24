@@ -1,0 +1,59 @@
+{
+  "experiment_id": "V5_CONTROL_RELEVANT_PITCH_SELECTION_V1",
+  "created_before_new_predictions": true,
+  "motivation_from_prior_source_audit": {
+    "fine_type_oracle_min_full_gain": 170.14354358944047,
+    "fine_type_probability_min_full_gain": -2.2522884676634476,
+    "conclusion": "fine pitch type carries goal-scale information, but ordinary multiclass log-loss spends capacity on distinctions that do not preserve pitcher-specific control difficulty"
+  },
+  "hypothesis": "A selector trained directly on the leave-one-out historical control propensity of the actually selected fine pitch can preserve control-relevant pitch-choice information better than an eight-class probability model.",
+  "policy": {
+    "official_open_data_only": true,
+    "test_rows_read": false,
+    "row_independent": true,
+    "current_pitch_type_at_inference": false,
+    "current_pitch_trackman_at_inference": false,
+    "future_control_labels": false
+  },
+  "source_protocol": {
+    "years": [2020, 2021],
+    "history": "R rows with season strictly less than source year",
+    "fine_label": "normalized historical tagged_pitch_type from official TrackMan linkage",
+    "control_labels_after_2021_read": false,
+    "F_route": "exact-C unchanged"
+  },
+  "teacher": {
+    "cell": "pitcher_id by fine pitch type",
+    "target": "leave-one-out smoothed cell centered-control rate minus leave-one-out frozen repertoire expectation",
+    "outcome_k": 100.0,
+    "repertoire_k": 200.0,
+    "own_control_label_removed": true,
+    "current_fine_type_used_only_to_construct_historical_training_teacher": true
+  },
+  "student_variants": {
+    "d4_l50": {
+      "iterations": 500,
+      "depth": 4,
+      "learning_rate": 0.04,
+      "l2_leaf_reg": 50.0
+    },
+    "d6_l100": {
+      "iterations": 600,
+      "depth": 6,
+      "learning_rate": 0.03,
+      "l2_leaf_reg": 100.0
+    }
+  },
+  "student_features": "official pre-pitch base columns only",
+  "correction_scale_grid": [0.1, 0.25, 0.5, 0.75, 1.0, 1.5],
+  "selection_rule": "maximize minimum exact-C full-score gain across 2020 and 2021, then minimum R gain; one common student variant and scale",
+  "source_gate": {
+    "minimum_full_gain_each_year": 5.0,
+    "minimum_R_gain_each_year": 5.0,
+    "pitcher_cluster_95pct_ci_lower_positive_each_year": true,
+    "oracle_teacher_correlation_positive_each_year": true,
+    "all_conditions_required": true
+  },
+  "next_step_if_pass": "preregister the fixed variant and scale for 2022/2023 development",
+  "next_step_if_fail": "close predictable current-pitch-selection axis without opening 2022+"
+}

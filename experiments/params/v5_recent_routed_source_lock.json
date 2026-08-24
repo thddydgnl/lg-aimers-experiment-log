@@ -1,0 +1,78 @@
+{
+  "experiment_id": "V5_RECENT_ROUTED_SOURCE_LOCK_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_after_2020_2021_discovery_before_any_component_2022_or_2023_training_or_metric",
+  "source_inputs": {
+    "F_axis": "experiments/results/v5_recent_game_f_update_source.json",
+    "R_candidate_universe": [
+      "expanded_fine_pitch_moe",
+      "expanded_auto_pitch_joint",
+      "partial_expanded_fine_pitch_moe",
+      "dense_physics_pitchtype_moe",
+      "dense_moe_reliability"
+    ],
+    "R_weight_grid": 0.05,
+    "R_constraint": "exactly two positive nonnegative weights summing to one",
+    "ranking": "maximize minimum combined full gain across 2020/2021, then minimum R gain, then mean full gain"
+  },
+  "locked_recipe": {
+    "parent": "exact C",
+    "R": {
+      "components": [
+        {
+          "name": "expanded_fine_pitch_moe",
+          "weight": 0.6,
+          "source_prediction": "v5_expanded_fine_pitch_moe_source_{year}.npz:final_prediction",
+          "fresh_model": "catboost_fine_pitch_moe",
+          "inner_parent_blend_gamma": 0.5,
+          "params": "experiments/params/v5_expanded_fine_pitch_moe_catboost.json"
+        },
+        {
+          "name": "expanded_auto_pitch_joint",
+          "weight": 0.4,
+          "source_prediction": "v5_expanded_auto_pitch_joint_source_{year}.npz:final_prediction",
+          "fresh_model": "catboost_auto_pitch_joint",
+          "inner_parent_blend_gamma": 0.25,
+          "params": "experiments/params/v5_auto_pitch_joint_catboost.json"
+        }
+      ],
+      "formula": "0.6 * [exact_C + 0.5*(fine_raw-exact_C)] + 0.4 * [exact_C + 0.25*(auto_raw-exact_C)]"
+    },
+    "F": {
+      "horizon_previous_games": 1,
+      "k": 100.0,
+      "formula": "(decoded_previous_game_successes + 100*exact_C)/(decoded_previous_game_n+100)",
+      "invalid_decoder": "exact C"
+    },
+    "route": "R formula on game_type R; F formula on game_type F",
+    "clipping": [0.000001, 0.999999],
+    "component_count_for_complexity_contract": 3
+  },
+  "source_gate": {
+    "minimum_R_gain_each_year": 45.0,
+    "minimum_F_gain_each_year": 800.0,
+    "minimum_full_gain_each_year": 100.0,
+    "R_F_and_full_pitcher_cluster_95_ci_lower_strictly_positive_each_year": true
+  },
+  "development_protocol": {
+    "years": [2022, 2023],
+    "fresh_training_required_for_both_R_components": true,
+    "same_parent_R_gate": "positive point and cluster CI lower in both years",
+    "same_parent_F_gate": "positive point and cluster CI lower in both years",
+    "anchors": ["exact C", "v5_honest_m3_r_identity", "v5_honest_m3_r_grid"],
+    "G_dev": "minimum full gain over both years and all three anchors",
+    "minimum_G_dev_strictly_greater_than": 132.11992465293324,
+    "on_fail": "close without reading a 2024 candidate",
+    "on_pass": "hash-lock fresh development models and recipe before 2024"
+  },
+  "data_contract": {
+    "official_open_data_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "other_evaluation_rows_at_inference": false,
+    "row_independent": true,
+    "automatic_dacon_submission": false
+  },
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json",
+  "goal_completion_claimed": false
+}

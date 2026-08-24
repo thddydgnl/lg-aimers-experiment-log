@@ -1,0 +1,50 @@
+{
+  "experiment_id": "V5_TEMPORAL_LEAF_RIDGE",
+  "status": "preregistered_before_source_feasibility_score",
+  "created_local_date": "2026-08-21",
+  "hypothesis": "A tree fitted only on old block A can discover stable nonlinear partitions. A strongly regularized Ridge fitted on the immediately preceding block B can then estimate only the residual correction to component C without learning new target-season partitions.",
+  "data_contract": {
+    "official_open_only": true,
+    "route": "R_only",
+    "test_rows_read": false,
+    "row_independent_inference": true,
+    "target_labels_used_in_fit_or_preprocessing": false,
+    "source_feasibility_transition": "tree A=2019, residual B=2020, target C=2021",
+    "development_targets_if_source_passes": [2022, 2023],
+    "confirmation_target_if_development_passes": 2024
+  },
+  "fixed_recipe": {
+    "drop_columns": ["row_id", "control_success", "pitcher_id", "batter_id", "game_type"],
+    "categorical_encoding": "OrdinalEncoder fitted on A only; unknown=-1",
+    "numeric_imputation": "median fitted on A only",
+    "tree": {
+      "library": "lightgbm.LGBMClassifier",
+      "objective": "binary",
+      "n_estimators": 120,
+      "learning_rate": 0.03,
+      "num_leaves": 12,
+      "min_child_samples": 2000,
+      "reg_lambda": 100.0,
+      "max_bin": 32,
+      "random_state": 2026
+    },
+    "leaf_encoder": "one-hot fitted on B leaves only",
+    "residual_model": {
+      "target": "y_B - component_C_B",
+      "model": "Ridge",
+      "alpha": 10000.0,
+      "solver": "lsqr",
+      "fit_intercept": true
+    },
+    "application": {
+      "gamma": 0.2,
+      "raw_correction_clip": [-0.02, 0.02],
+      "formula": "clip(component_C_target + gamma * clip(ridge_leaf_residual, -0.02, 0.02), 1e-6, 1-1e-6)"
+    }
+  },
+  "gates": {
+    "source_feasibility": "point gain vs exact target-year component C > 0 and pitcher-cluster 95% CI lower > 0",
+    "development": "same fixed recipe must pass exact C and both honest R anchors in both 2022 and 2023",
+    "failure_action": "stop without reading later target labels"
+  }
+}

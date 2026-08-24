@@ -1,0 +1,68 @@
+{
+  "experiment_id": "V5_CONTEXTUAL_PRIVILEGED_MARGINALIZATION_SIGNAL_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_before_signal_generation",
+  "hypothesis": "Conditional physics integration was positive but weak because its teacher saw only count, outs, and hand. Train a privileged teacher on every official row-local pre-pitch feature plus historical current-pitch identity/physics, then marginalize only the privileged pitch fields over the pitcher's completed-history repertoire while holding the full current official row fixed.",
+  "predecessor": {
+    "signal": "experiments/results/v5_conditional_physics_integration_signal_source.json",
+    "control_result": "experiments/results/v5_conditional_physics_integration_source.json",
+    "observed_limitation": "integrated_full x 0.1 produced R +22.37/+9.09 but its teacher omitted most exact-C row context"
+  },
+  "history_linkage": {
+    "method": "locked exact plus conservative partial official TrackMan linkage",
+    "evidence": "experiments/results/v5_partial_trackman_linkage_source.json",
+    "history_cutoff": "season strictly before validation"
+  },
+  "teacher": {
+    "main_features": "all 47 official target-free train columns except row_id",
+    "control_privileged_features": ["pitch_type_group", "tagged_pitch_type", "auto_pitch_type"],
+    "physics_features": [
+      "rel_speed",
+      "spin_rate",
+      "induced_vert_break",
+      "horz_break",
+      "extension",
+      "rel_height",
+      "rel_side",
+      "zone_speed"
+    ],
+    "identifier_handling": "official pitcher, batter, and team IDs are categorical current-row features; no TrackMan entity ID is a feature",
+    "estimator": "deterministic LightGBM binary recipe from V5 privileged teacher feasibility"
+  },
+  "marginalization": {
+    "current_fields_held_fixed": "all 47 official target-free train columns",
+    "historical_fields_integrated": "pitch identity and eight TrackMan physics fields",
+    "repertoire_sample_size": 32,
+    "sampling": "deterministic evenly spaced history after stable season/row_id sort",
+    "fallback_order": ["pitcher_id", "pitcher_team_id x pitcher_hand", "pitcher_hand"],
+    "batch_rows": 4000,
+    "signals": {
+      "integrated_full": "privileged full teacher mean over repertoire",
+      "integrated_control": "same teacher without eight physics fields",
+      "physics_delta": "integrated_full minus integrated_control"
+    }
+  },
+  "source_cutoffs": {
+    "2020_validation": [2019],
+    "2021_validation": [2019, 2020]
+  },
+  "semantic_gate": {
+    "minimum_augmented_history_rows_2020": 180000,
+    "minimum_augmented_history_rows_2021": 370000,
+    "minimum_native_pitcher_validation_coverage_each_year": 0.65,
+    "minimum_total_repertoire_coverage_each_year": 0.99,
+    "minimum_integrated_full_standard_deviation": 0.005,
+    "minimum_physics_delta_standard_deviation": 0.0001,
+    "validation_labels_used_for_fit_or_marginalization": false,
+    "current_validation_trackman_used": false,
+    "row_independent_inference": true
+  },
+  "data_contract": {
+    "official_train_and_trackman_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "automatic_dacon_submission": false
+  },
+  "downstream_control_metrics_read": false,
+  "goal_completion_claimed": false
+}

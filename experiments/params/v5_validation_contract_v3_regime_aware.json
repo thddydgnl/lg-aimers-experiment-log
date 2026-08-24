@@ -1,0 +1,55 @@
+{
+  "contract_id": "V5_VALIDATION_CONTRACT_V3_REGIME_AWARE",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_before_any_v5_recent_routed_2024_candidate_training_or_metric",
+  "reason_for_addendum": "V2 correctly documents that F before 2023 is a different measurement regime, but its unstratified minimum-full-gain formula nevertheless forces a 2025 post-break F correction to improve the irrelevant pre-break 2022 F labels. V3 keeps the same actual-LB anchor, haircut, complexity limit, temporal lock, and 2024 CI requirement, while making the already documented F regime boundary explicit.",
+  "non_relaxation_checks": {
+    "v3_actual_anchor_unchanged": 1090.9100565103,
+    "haircut_unchanged": 0.75,
+    "required_raw_gain_unchanged": 132.11992465293324,
+    "maximum_nonnegative_components_unchanged": 3,
+    "signed_weights_forbidden": true,
+    "same_fold_meta_fit_forbidden": true,
+    "2024_recipe_lock_required": true,
+    "2024_pitcher_cluster_ci_required": true,
+    "actual_submission_still_manual": true
+  },
+  "regimes": {
+    "R": "one continuous regime; transfer must pass 2020, 2021, 2022, and 2023 before 2024",
+    "F_prebreak": "season <= 2022; the candidate must preserve its exact-C parent",
+    "F_postbreak": "season >= 2023; the fixed row-local recent-game update applies",
+    "deployment": "2025 is post-break"
+  },
+  "development_gates": {
+    "R_same_parent": "point gain and pitcher-cluster 95% CI lower bound are positive in 2020, 2021, 2022, and 2023",
+    "F_source_mechanism": "the fixed recent-game estimator has positive point and CI lower bound in source 2020 and 2021",
+    "F_postbreak": "point gain and CI lower bound are positive in 2023",
+    "legacy_2022_guard": "with F preserved, full point gain and CI lower bound versus exact C are positive",
+    "postbreak_development_full": "for 2023, point gain and CI lower bound versus exact C and both honest R anchors each exceed 132.11992465293324"
+  },
+  "confirmation_2024": {
+    "single_locked_run": true,
+    "same_parent_R_and_F": "point gain and CI lower bound positive",
+    "all_anchor_full": "point gain and CI lower bound versus exact C and both honest R anchors each exceed 132.11992465293324",
+    "no_recipe_change_after_open": true
+  },
+  "conservative_expected_score": {
+    "G_dev": "minimum of 2023 full point and CI lower gains over exact C and both honest anchors",
+    "G_confirm": "minimum 2024 full point gain over exact C and both honest anchors",
+    "G_ci": "minimum 2024 full pitcher-cluster CI lower gain over exact C and both honest anchors",
+    "G_robust": "min(G_dev, G_confirm, G_ci)",
+    "formula": "1090.9100565103 + 0.75 * max(0, G_robust)",
+    "completion_threshold": "strictly greater than 1190"
+  },
+  "data_and_packaging": {
+    "official_open_data_only": true,
+    "external_data_or_api": false,
+    "test_aggregation_or_order_dependency": false,
+    "row_independent_inference": true,
+    "future_labels_or_2025_trackman": false,
+    "research_package_sample_parity_required": true,
+    "zip_invariance_time_ram_sha_gates_required": true,
+    "automatic_dacon_submission": false
+  },
+  "goal_completion_claimed": false
+}

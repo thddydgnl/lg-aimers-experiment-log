@@ -1,0 +1,60 @@
+{
+  "experiment_id": "V5_TWO_SEASON_RESIDUAL_CONSENSUS_V1",
+  "status": "locked_before_candidate_scores",
+  "created_at_kst": "2026-08-22",
+  "hypothesis": "A one-season conditional residual table is noisy, while an input feature made from same-season target encoding is train/inference-inconsistent. Retain only the conservative magnitude of exact-C residual effects whose sign agrees in both of the two latest completed outer-time folds.",
+  "relationship_to_prior_work": {
+    "v4_robust_group_effects": "That screen tuned one immediately previous-season flat group table around the published M3 anchor. This recipe uses exact-C outer-fold residuals, a fixed hierarchy, two-season sign consensus, and the V5 honest-anchor contract.",
+    "v5_temporal_stable_joint_direct": "That model appended same-season leave-one-out target encodings during training and previous-season encodings during validation. This recipe never uses target encoding as a direct model feature; it transfers only completed outer-fold residual effects.",
+    "public_v18_record": "Uses only the publicly described pitcher-by-batter-hand and pitcher-by-pressure-by-batter-hand structure; no model artifact, external data, or leaderboard-derived weight is used."
+  },
+  "effect_recipe": {
+    "route": "R only; F remains the exact-C prediction",
+    "source_residual": "control_success minus exact-C outer-time prediction, centered by source-season R mean",
+    "hierarchy": [
+      {"keys": ["pitcher_id"], "parent": "zero", "strength": 100.0},
+      {"keys": ["pitcher_id", "batter_hand"], "parent": "pitcher", "strength": 38.0},
+      {"keys": ["pitcher_id", "pressure_state", "batter_hand"], "parent": "pitcher x batter_hand", "strength": 30.0}
+    ],
+    "pressure_state": {
+      "normal": "balls < 3 and strikes < 2",
+      "three_ball": "balls == 3 and strikes < 2",
+      "two_strike": "balls < 3 and strikes == 2",
+      "full": "balls == 3 and strikes == 2"
+    },
+    "target_year_sources": "Y-2 and Y-1 outer-time folds",
+    "consensus": "if both source effects are known and have the same nonzero sign, use that sign times min(abs(effect_Y-2), abs(effect_Y-1)); otherwise zero",
+    "component": "clip(exact_C + consensus_effect, 1e-6, 1-1e-6)",
+    "candidate": "(1-gamma)*exact_C + gamma*component on R; exact_C on F",
+    "gamma_grid": [0.25, 0.5, 0.75, 1.0]
+  },
+  "validation": {
+    "gamma_selection_year": 2022,
+    "reproduction_year": 2023,
+    "selection": "maximize minimum 2022 full gain across exact-C and both honest anchors, then exact-C R gain, then smaller gamma",
+    "confirmation_year_unopened": 2024,
+    "advance_gate": {
+      "positive_exact_C_R_gain_and_cluster_CI_lower_both_years": true,
+      "minimum_full_gain_across_both_years_and_all_three_anchors": 132.11992465293324
+    },
+    "on_fail": "close without reading 2024 for this recipe",
+    "on_pass": "write an immutable 2024 recipe lock before opening 2024"
+  },
+  "legality": {
+    "official_train_only": true,
+    "external_data_or_api": false,
+    "leaderboard_values_used_for_recipe": false,
+    "future_labels": false,
+    "test_aggregation_or_order": false,
+    "row_independent_inference": true,
+    "automatic_submission": false
+  },
+  "complexity": {
+    "outer_components": ["exact_C", "two-season residual-consensus component"],
+    "weights": "nonnegative and sum to one",
+    "free_weight_count": 1,
+    "confirmation_fold_fitting": false
+  },
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json",
+  "goal_completion_claimed": false
+}

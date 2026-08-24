@@ -1,0 +1,77 @@
+{
+  "experiment_id": "V5_LUPI_HYBRID_DENOISING_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "preregistered_before_source_2021_predictions",
+  "hypothesis": "Outer-time current-pitch TrackMan teachers are lower-variance historical supervision. Replacing the hard target only where a valid teacher exists, while retaining every unmatched official row with its hard label, can denoise the deployable history-only model without discarding half of the data.",
+  "difference_from_prior_lupi": {
+    "soft_student": "fit only matched teacher rows and discarded unmatched hard-label rows",
+    "physics_delta_student": "fit only the teacher-minus-control residual and discarded unmatched hard-label rows",
+    "new_structure": "fit one Brier CatBoost on the full history; matched rows use a hard/teacher mixture and unmatched rows keep the official hard target"
+  },
+  "data_contract": {
+    "official_data_only": true,
+    "external_data": false,
+    "test_rows_read": false,
+    "current_or_validation_trackman_at_inference": false,
+    "teacher_source": "strictly outer-time v5_trackman_physics_soft_teacher artifacts",
+    "row_independent_inference": true,
+    "automatic_submission": false
+  },
+  "source_gate": {
+    "validation_year": 2021,
+    "teacher_years": [2020],
+    "teacher_key": "physics_teacher",
+    "history_years": [2019, 2020],
+    "target_mix_alphas": [0.0, 0.5, 1.0],
+    "alpha_definition": "target = (1-alpha)*physics_teacher + alpha*hard_label on teacher rows; hard_label elsewhere",
+    "route": "R only when blended with exact C; F remains exact C",
+    "blend_weights": [0.05, 0.1, 0.2, 0.35, 0.5],
+    "selection": "maximize R gain over exact C, then full routed gain, then prefer larger alpha and smaller blend weight",
+    "pass_requirements": [
+      "R point gain over exact C >= 25",
+      "R pitcher-cluster 95% gain lower bound > 0",
+      "routed full point gain over exact C > 0",
+      "selected hybrid must outperform the alpha=1 hard-label Brier model at the same blend weight"
+    ],
+    "on_fail": "close the hybrid LUPI target axis without running 2022+",
+    "on_pass": "freeze alpha and blend weight before any 2022 metric is read"
+  },
+  "model_recipe": {
+    "model": "catboost_teacher RMSE/Brier regressor",
+    "params": "experiments/params/v5_lupi_hybrid_catboost.json",
+    "features": [
+      "base",
+      "e14",
+      "platoon",
+      "hand_matchup",
+      "e14_hand_cells",
+      "e14_count_cells",
+      "e14_type_count_cells",
+      "trackman_rich",
+      "batter_e14",
+      "batter_middle_e14"
+    ],
+    "feature_hyperparameters": {
+      "e14_k": 50,
+      "pitcher_k": 50,
+      "platoon_k": 50,
+      "batter_e14_k": 80,
+      "batter_middle_k": 100
+    },
+    "drop_features": "identical to exact-C: pitcher_id and all raw group-specific e58 fields",
+    "fit_game_types": ["R", "F"],
+    "inner_validation": "none",
+    "teacher_fill_hard_labels": true
+  },
+  "development_if_source_passes": {
+    "years": [2022, 2023],
+    "teacher_years": {
+      "2022": [2020, 2021],
+      "2023": [2020, 2021, 2022]
+    },
+    "comparison_anchors": ["exact_parent_C", "honest_r_identity", "honest_r_grid"],
+    "required_common_full_gain": 132.11992465,
+    "confirmation_year": 2024,
+    "no_retuning_after_development": true
+  }
+}

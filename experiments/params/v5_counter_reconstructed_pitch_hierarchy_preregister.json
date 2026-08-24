@@ -1,0 +1,81 @@
+{
+  "experiment_id": "V5_COUNTER_RECONSTRUCTED_PITCH_HIERARCHY_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "preregistered_before_source_metrics",
+  "hypothesis": "The official pitcher pitch-mix counter and three cumulative group rates can reconstruct the coarse group of nearly every historical pitch. A selector trained on those dense labels should estimate the hidden current coarse group better than the prior TrackMan-only selector, and its group probabilities can legally constrain the sparse fine-pitch selector before control marginalization.",
+  "novelty_relative_to_prior_work": {
+    "E22R_and_V5_pitchtype_MoE": "trained the pitch selector only on rows matched to TrackMan",
+    "V5_fine_pitchtype_latent": "predicted eight fine types directly from sparse TrackMan labels",
+    "this_experiment": "derives dense coarse labels from official main-table pitchmix counter deltas, trains a dense coarse selector, and projects sparse fine probabilities onto its coarse marginals"
+  },
+  "data_contract": {
+    "official_train_and_trackman_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "source_validation_seasons": [2020, 2021],
+    "latest_control_label_season_used_for_metrics": 2021,
+    "training_label_reconstruction": "Next same-pitcher counter row only inside the supplied completed historical slice; boundary and inconsistent rows are dropped.",
+    "validation_reconstructed_label_use": "semantic and selector diagnostics only, never candidate construction",
+    "current_pitch_group_at_inference": false,
+    "current_or_validation_trackman_at_inference": false,
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "coarse_label_reconstruction": {
+    "counter": "asof_pitcher_pitchmix_n",
+    "components": [
+      "asof_pitcher_fastball_rate",
+      "asof_pitcher_breaking_rate",
+      "asof_pitcher_offspeed_rate"
+    ],
+    "groups": ["fastball", "breaking", "offspeed", "other"],
+    "rule": "Require next_n=current_n+1; rounded component deltas must be binary and sum to zero or one; residual increment is other.",
+    "required_history_coverage": 0.95,
+    "required_trackman_agreement": 0.9,
+    "on_fail": "Close without target metrics or 2022+ labels."
+  },
+  "selector": {
+    "model": "CatBoost MultiClass on the exact legal pre-pitch BASE_FEATURES",
+    "iterations": 400,
+    "depth": 6,
+    "learning_rate": 0.06,
+    "l2_leaf_reg": 20.0,
+    "training_rows": "R rows from seasons strictly before validation with reconstructed coarse labels",
+    "fine_selector": "The existing tagged/auto eight-class CatBoost selector trained only on prior TrackMan rows",
+    "hierarchical_projection": "Within each learned fine-to-coarse mapping, preserve fine conditional ratios but replace/interpolate the coarse marginal with the dense coarse selector probability."
+  },
+  "candidate_families": {
+    "dense_coarse_control": "Pitcher by reconstructed coarse-group centered control effects marginalized by dense selector probabilities versus the pitcher's completed-history repertoire.",
+    "hierarchical_fine_control": "Pitcher by fine-type centered control effects marginalized by hierarchically projected fine probabilities versus the pitcher's fine repertoire."
+  },
+  "source_grid": {
+    "outcome_k": [10, 50, 100],
+    "repertoire_k": [50, 200],
+    "selector_weights": [0.5, 0.75, 1.0],
+    "hierarchy_alphas": [0.25, 0.5, 0.75, 1.0],
+    "gammas": [0.1, 0.25, 0.5, 0.75, 1.0],
+    "fine_label_sources": ["tagged", "auto"],
+    "selection_order": [
+      "maximum minimum full-score gain across 2020 and 2021",
+      "maximum minimum R-score gain",
+      "maximum mean full-score gain",
+      "simpler dense_coarse before hierarchical_fine, larger shrinkage, smaller gamma"
+    ]
+  },
+  "diagnostic_oracle": {
+    "true_reconstructed_coarse_group": true,
+    "true_trackman_fine_type": true,
+    "eligible_as_candidate": false,
+    "eligible_for_expected_lb": false,
+    "eligible_for_submission": false,
+    "required_minimum_full_gain_to_confirm_goal_scale_headroom": 132.11992465293324
+  },
+  "source_gate": {
+    "minimum_full_gain_each_year": 25.0,
+    "minimum_r_gain_each_year": 25.0,
+    "pitcher_cluster_95_ci_lower_positive_each_year": true,
+    "on_fail": "Close without reading 2022+ labels.",
+    "on_pass": "Freeze one family and all parameters before producing 2022 and 2023 predictions."
+  },
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json"
+}

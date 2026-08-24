@@ -1,0 +1,44 @@
+{
+  "experiment_id": "V5_MAIN_ID_COHORT_SOURCE_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_before_source_metrics",
+  "parent_validation_contract": "experiments/params/v5_validation_contract_v2.json",
+  "hypothesis": "The official pitcher_id and batter_id are player identifiers rather than sample identifiers. Their coarse numeric neighborhoods may encode stable registration cohorts that help cold-start and low-history players even when exact identity is deliberately omitted from exact C. Only coarse floor bins learned from completed history are eligible; row_id and external identity lookup remain forbidden.",
+  "data_policy": {
+    "official_train_only": true,
+    "source_years": [2020, 2021],
+    "latest_label_year": 2021,
+    "years_unopened_until_source_pass": [2022, 2023, 2024],
+    "test_rows_read": false,
+    "external_lookup_or_data": false,
+    "row_id_used": false,
+    "evaluation_row_aggregation_or_order": false,
+    "row_independent": true,
+    "automatic_submission": false
+  },
+  "candidate": {
+    "route": "R only; F equals exact-C parent",
+    "entities": ["pitcher", "batter", "equal_mean"],
+    "id_transform": "floor(integer official player ID / bin_width)",
+    "bin_width": [25, 50, 100, 250, 500, 1000],
+    "cohort_eb_k": [500, 2000, 10000],
+    "cold_reliability_k": [20, 100, 500, 2000],
+    "gamma": [0.05, 0.1, 0.2, 0.4],
+    "direction": "completed-history cohort posterior minus the row's official entity career success rate, multiplied by k/(asof_entity_n+k)",
+    "fallback": "completed-history R global prior",
+    "selection": "maximize the minimum full gain across 2020 and 2021, then minimum R gain, mean full gain, smaller gamma, stronger cohort shrinkage, wider bin"
+  },
+  "source_gate": {
+    "minimum_full_gain_each_year": 30.0,
+    "minimum_R_gain_each_year": 30.0,
+    "R_pitcher_cluster_ci_lower_positive_each_year": true,
+    "full_pitcher_cluster_ci_lower_positive_each_year": true,
+    "on_pass": "freeze one recipe before 2022/2023 development",
+    "on_fail": "close numeric main-player-ID cohort axis without reading 2022+ labels"
+  },
+  "completion_policy": {
+    "source_pass_is_not_goal_completion": true,
+    "2024_confirmation_required_after_development": true,
+    "goal_completion_claimed": false
+  }
+}

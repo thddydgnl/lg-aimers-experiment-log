@@ -1,0 +1,80 @@
+{
+  "experiment_id": "V5_R_OUTCOME_SPECIALIST_V1",
+  "status": "preregistered_before_2022_2023_candidate_predictions",
+  "created_at_kst": "2026-08-21",
+  "validation_contract": "experiments/params/v5_validation_contract_v2.json",
+  "hypothesis": "The dominant R regime should benefit from a reverse_any outcome model trained only on R rows, avoiding contamination from the structurally different and discontinuous F label process.",
+  "legality": {
+    "official_data_only": true,
+    "test_rows_read": false,
+    "test_aggregation": false,
+    "row_independent": true
+  },
+  "fixed_parent": {
+    "name": "V3 component C trained on R and F",
+    "key": "catboost_outcome"
+  },
+  "required_honest_anchors": [
+    "v5_honest_m3_r_identity",
+    "v5_honest_m3_r_grid"
+  ],
+  "model": {
+    "family": "CatBoost multiclass outcome reverse_any",
+    "fit_game_types": ["R"],
+    "features": [
+      "base",
+      "e14",
+      "platoon",
+      "hand_matchup",
+      "e14_hand_cells",
+      "e14_count_cells",
+      "e14_type_count_cells",
+      "trackman_rich",
+      "batter_e14",
+      "batter_middle_e14"
+    ],
+    "params": "experiments/params/v3_outcome_seed2026.json",
+    "outcome_scheme": "reverse_any",
+    "inner_validation": "none",
+    "e14_k": 50.0,
+    "k_pitcher": 50.0,
+    "k_platoon": 50.0,
+    "batter_e14_k": 80.0,
+    "batter_middle_k": 100.0,
+    "drop_features": "same V3 C overall-Trackman drop list plus pitcher_id",
+    "variants": {
+      "all_history": {
+        "history_window": null,
+        "season_decay": 1.0,
+        "development_stem": "v5_r_specialist_all_dev2223",
+        "confirmation_stem": "v5_r_specialist_all_confirm24"
+      },
+      "decay80": {
+        "history_window": null,
+        "season_decay": 0.8,
+        "development_stem": "v5_r_specialist_decay80_dev2223",
+        "confirmation_stem": "v5_r_specialist_decay80_confirm24"
+      },
+      "recent3": {
+        "history_window": 3,
+        "season_decay": 1.0,
+        "development_stem": "v5_r_specialist_recent3_dev2223",
+        "confirmation_stem": "v5_r_specialist_recent3_confirm24"
+      }
+    }
+  },
+  "selection": {
+    "development_years": [2022, 2023],
+    "unopened_confirmation_year": 2024,
+    "route": "R only; F remains each comparison baseline unchanged",
+    "gamma_grid": [0.25, 0.5, 0.75, 1.0],
+    "comparisons": ["exact_parent_C", "v5_honest_m3_r_identity", "v5_honest_m3_r_grid"],
+    "eligibility": "positive R point gain and positive pitcher-cluster 95% R gain lower bound in every development-year/comparison cell",
+    "ranking": "largest minimum R point gain across all cells, then smaller gamma, then variant name",
+    "failure_rule": "if no eligible variant, do not fit or read a 2024 candidate"
+  },
+  "confirmation": {
+    "no_retuning": true,
+    "completion": "V5 validation contract v2 conservative lower score and all package gates"
+  }
+}

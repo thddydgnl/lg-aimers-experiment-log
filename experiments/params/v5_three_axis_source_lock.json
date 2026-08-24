@@ -1,0 +1,89 @@
+{
+  "experiment_id": "V5_THREE_AXIS_SOURCE_LOCK_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_after_2020_2021_source_discovery_before_any_candidate_2022_training_or_metric",
+  "selection_evidence_role": "discovery_only; source labels selected the components and weights, so source confidence intervals are not confirmatory",
+  "source_search": {
+    "years": [2020, 2021],
+    "parent": "exact C",
+    "eligible_primitives": [
+      "exact C",
+      "dense physics MoE",
+      "dense pitch joint",
+      "component-pattern MoE",
+      "current-state numeric",
+      "exact-C seed 1",
+      "exact-C seed 7"
+    ],
+    "excluded": [
+      "all diagnostic true-group oracles",
+      "teacher labels",
+      "four-or-more component stacks",
+      "signed weights",
+      "any 2022/2023/2024 prediction or label"
+    ],
+    "weight_grid": 0.05,
+    "constraints": "exactly three nonnegative weights summing to one",
+    "ranking": "maximize minimum full gain across 2020/2021, then minimum R gain, then mean full gain"
+  },
+  "locked_recipe": {
+    "components": [
+      {
+        "name": "dense_pitch_joint",
+        "weight": 0.10,
+        "model": "catboost_dense_pitch_joint",
+        "prediction_key": "dense_pitch_joint_raw",
+        "params": "experiments/params/v5_dense_pitch_joint_catboost.json",
+        "features": ["base", "e14", "platoon", "hand_matchup", "e14_hand_cells", "e14_count_cells", "e14_type_count_cells", "trackman_rich", "batter_e14", "batter_middle_e14", "pitchmix_e14"],
+        "drop_features": ["pitcher_id"],
+        "outcome_scheme": "reverse_any"
+      },
+      {
+        "name": "component_pattern_moe",
+        "weight": 0.25,
+        "model": "catboost_component_pattern_moe",
+        "prediction_key": "component_pattern_moe_raw",
+        "params": "experiments/params/v5_component_pattern_moe_catboost.json",
+        "features": ["base", "e14", "platoon", "hand_matchup", "e14_hand_cells", "e14_count_cells", "e14_type_count_cells", "trackman_rich", "batter_e14", "batter_middle_e14", "pitchmix_e14"],
+        "drop_features": ["pitcher_id"],
+        "outcome_scheme": "component15 auxiliary counters"
+      },
+      {
+        "name": "current_state_numeric",
+        "weight": 0.65,
+        "model": "catboost_numeric",
+        "prediction_key": "catboost_numeric",
+        "params": "experiments/params/v4_numeric_cat_seed42.json",
+        "features": ["base", "current_state_context", "current_state_level", "trackman_platoon", "trackman_count"],
+        "drop_features": ["e59_platoon_n_log", "e59_rel_speed_delta", "e59_spin_rate_delta", "e59_induced_vert_break_delta", "e59_horz_break_delta", "e59_extension_delta", "e59_rel_height_delta", "e59_rel_side_delta", "e59_zone_speed_delta", "e59_platoon_unseen", "e71_count_n_log", "e71_count_unseen"],
+        "trackman_platoon_k": 200,
+        "trackman_count_k": 200
+      }
+    ],
+    "formula": "0.10*dense_pitch_joint + 0.25*component_pattern_moe + 0.65*current_state_numeric",
+    "component_prediction_semantics": "raw model probabilities before each component's standalone source-gate top-level blend",
+    "clipping": [0.000001, 0.999999],
+    "row_route": "same fixed blend on R and F"
+  },
+  "development_protocol": {
+    "years": [2022, 2023],
+    "fresh_stage_rerun_required": true,
+    "same_parent_R_gate": "positive point and pitcher-cluster 95% CI lower bound versus exact C in both years",
+    "postbreak_F_gate": "2023 F point gain and pitcher-cluster 95% CI lower bound versus exact C must both be positive",
+    "honest_anchors": ["v5_honest_m3_r_identity", "v5_honest_m3_r_grid"],
+    "G_dev": "minimum full-score gain over 2022/2023 versus exact C and both honest anchors",
+    "minimum_G_dev": 132.11992465293324,
+    "on_fail": "Close without training or reading a 2024 candidate.",
+    "on_pass": "Hash-lock all three fresh stages and this recipe before a single 2024 candidate run."
+  },
+  "data_contract": {
+    "official_open_data_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "other_validation_or_test_rows_at_inference": false,
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json",
+  "goal_completion_claimed": false
+}

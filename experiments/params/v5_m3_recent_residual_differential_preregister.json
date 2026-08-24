@@ -1,0 +1,68 @@
+{
+  "experiment_id": "V5_M3_RECENT_RESIDUAL_DIFFERENTIAL_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_before_any_M3_specific_residual_differential_metric",
+  "hypothesis": "The previously tested label-level pitcher context effects were redundant, and residual tables made from another model changed sign when placed on a newer parent. Re-estimating only within-pitcher context contrasts from the frozen M3 recipe's own strictly out-of-season residuals may recover the legal recent-two-season signal without importing stale pitcher levels.",
+  "provenance": {
+    "legal_public_prior": "original pre-leaderboard C3 residual-differential recipe found in the stopped agent workspace",
+    "excluded": [
+      "all leaderboard-derived affine constants",
+      "all leaderboard-derived 0.60 or 0.65 context rescaling",
+      "pitcher main effects",
+      "batter main effects"
+    ],
+    "fixed_scale": 1.0
+  },
+  "data_contract": {
+    "official_train_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "test_aggregation_or_order_dependency": false,
+    "future_labels": false,
+    "leaderboard_used_for_local_fit_or_selection": false,
+    "automatic_dacon_submission": false
+  },
+  "recipe": {
+    "parent": "published V3 sparse M3 OOF recipe",
+    "source_scope": "R rows only",
+    "application_scope": "R rows only; F remains bitwise equal to each comparison anchor",
+    "history_window": "immediately preceding two completed OOF seasons",
+    "residual": "control_success minus that source season's published V3 sparse M3 OOF prediction",
+    "contexts": {
+      "same_hand": 1000.0,
+      "two_strikes": 1000.0,
+      "runner_present": 2000.0
+    },
+    "contrast": "for each pitcher, residual_mean(context=1)-residual_mean(context=0), shrunk by n_eff/(n_eff+k), where n_eff=n0*n1/(n0+n1)",
+    "effect_coding": "mapped contrast times +0.5 for context=1 and -0.5 for context=0",
+    "combination": "sum the three fixed contrasts and add once at scale 1.0",
+    "clipping": [0.000001, 0.999999]
+  },
+  "source_protocol": {
+    "development_targets": {
+      "2022": [2020, 2021],
+      "2023": [2021, 2022]
+    },
+    "comparison_anchors": [
+      "published_v3_sparse_m3",
+      "v5_honest_m3_r_identity",
+      "v5_honest_m3_r_grid"
+    ],
+    "selection": "none; every recipe parameter is fixed above",
+    "bootstrap": "2000 paired pitcher-cluster draws",
+    "gate": {
+      "same_parent_R_point_gain_positive_each_year": true,
+      "same_parent_R_cluster_95_ci_lower_positive_each_year": true,
+      "all_anchor_full_point_gain_each_year_strictly_above": 132.11992465293324,
+      "all_anchor_full_pitcher_cluster_95_ci_lower_each_year_strictly_above": 132.11992465293324
+    },
+    "on_fail": "close without reading or scoring 2024 for this recipe",
+    "on_pass": "write immutable recipe and implementation hashes before a separate one-shot 2024 confirmation"
+  },
+  "complexity": {
+    "deployed_recipe_count": 1,
+    "free_fitted_weights": 0,
+    "signed_ensemble_weights": false
+  },
+  "goal_completion_claimed": false
+}

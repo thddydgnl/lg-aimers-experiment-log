@@ -1,0 +1,92 @@
+{
+  "experiment_id": "V5_H1_OOF_RESIDUAL_R_V1",
+  "status": "preregistered_before_any_candidate_2022_evaluation",
+  "created_at_kst": "2026-08-21",
+  "purpose": "Learn a compact row-local correction to the frozen V3 M3 anchor from strictly earlier-season OOF errors, using hierarchical current-season state rather than same-fold labels.",
+  "protocol": {
+    "official_train_only": true,
+    "external_data": false,
+    "test_rows_read": false,
+    "leaderboard_used_for_fit_or_selection": false,
+    "anchor": "v3_sparse_m3_frozen with exactly reconstructed 2020 and 2021 OOF panels",
+    "selection_fold": 2022,
+    "selection_route": "R",
+    "selection_training_years": [2020, 2021],
+    "transfer_audit_fold": 2023,
+    "locked_confirmation_fold": 2024,
+    "fit_rule_for_fold_y": "fit only R rows from available V3 OOF panels with 2020 <= season < Y",
+    "target": "(control_success - V3_anchor) centered to zero separately inside each historical OOF season",
+    "application_route": "apply the correction only to R rows; retain V3 exactly on F rows",
+    "row_independent": true,
+    "future_safe_state": "official as-of counters minus constants frozen before the row season",
+    "no_same_fold_meta_fit": true
+  },
+  "feature_contract": {
+    "high_cardinality_ids": "excluded",
+    "anchor": ["probability", "logit_probability"],
+    "application": [
+      "game_month", "inning", "top_bottom", "balls_before", "strikes_before",
+      "outs_before", "score_diff_pitcher_team", "num_runners_on",
+      "home_win_expectancy", "away_win_expectancy", "li",
+      "pitcher_hand", "batter_hand"
+    ],
+    "official_asof": [
+      "pitcher_n_and_five_rates", "pitcher_recent_1_3_5_success_and_middle",
+      "batter_n_success_middle", "pitchmix_n_and_three_rates"
+    ],
+    "hierarchical_state": [
+      "pitcher_completed_history_beta_binomial_prior",
+      "pitcher_current_season_success_posteriors_k20_50_100_200",
+      "pitcher_current_season_failure_component_posteriors_k50",
+      "batter_completed_history_and_current_season_success_posteriors",
+      "posterior_reliability_and_variance"
+    ]
+  },
+  "candidate_configs": {
+    "ridge_a1000": {
+      "family": "ridge",
+      "alpha": 1000.0
+    },
+    "hgb_leaf15": {
+      "family": "hist_gradient_boosting",
+      "loss": "squared_error",
+      "learning_rate": 0.05,
+      "max_iter": 200,
+      "max_leaf_nodes": 15,
+      "min_samples_leaf": 1000,
+      "l2_regularization": 10.0,
+      "random_state": 2026
+    },
+    "catboost_d4": {
+      "family": "catboost_regression",
+      "loss_function": "RMSE",
+      "iterations": 500,
+      "depth": 4,
+      "learning_rate": 0.05,
+      "l2_leaf_reg": 50.0,
+      "random_seed": 2026
+    },
+    "catboost_d5": {
+      "family": "catboost_regression",
+      "loss_function": "RMSE",
+      "iterations": 500,
+      "depth": 5,
+      "learning_rate": 0.05,
+      "l2_leaf_reg": 100.0,
+      "random_seed": 2026
+    }
+  },
+  "correction_scales": [0.25, 0.5, 0.75, 1.0],
+  "selection_rule": {
+    "primary": "maximum 2022 R competition-score gain over V3",
+    "eligibility": "positive point gain and positive pitcher-cluster bootstrap 95% lower bound",
+    "tie_break": ["smaller correction scale", "simpler family in ridge,hgb,catboost_d4,catboost_d5 order"],
+    "if_no_candidate_is_eligible": "close this experiment as failed without opening 2023 or 2024 for configuration selection"
+  },
+  "post_selection_rule": {
+    "locked_items": ["feature contract", "model config", "correction scale", "R-only route"],
+    "2023": "transfer audit only; no parameter or route change",
+    "2024": "confirmation only after the selection artifact is written",
+    "completion": "subject to EXPERIMENT_PLAN_V5 conservative lower-bound and package gates"
+  }
+}

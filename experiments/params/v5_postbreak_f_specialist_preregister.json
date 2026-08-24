@@ -1,0 +1,94 @@
+{
+  "experiment_id": "V5_POSTBREAK_F_SPECIALIST_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_before_training_or_scoring_any_postbreak_F_specialist",
+  "hypothesis": "F changed label regime in 2023, but the existing exact-C parent and all prior supervised candidates pooled pre-break F labels. A direct binary specialist trained only on post-break F rows can learn the deployable 2025 regime; official row-local as-of histories and frozen season-start counter differences preserve row independence.",
+  "data_contract": {
+    "official_train_only": true,
+    "trackman_used": false,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "test_aggregation_or_order_dependency": false,
+    "future_labels": false,
+    "automatic_dacon_submission": false
+  },
+  "source_protocol": {
+    "season": 2023,
+    "game_type": "F",
+    "chronology": "official train.csv row order within the completed training season",
+    "selection_fit_months": [4, 5],
+    "selection_eval_months": [6, 7],
+    "confirmation_fit_months": [4, 5, 6, 7],
+    "confirmation_eval_months": [8, 9],
+    "parent": "exact-C predictions already produced without target-season labels",
+    "selection_rule": "among no_id, pitcher_id, and their fixed 50/50 probability mean, maximize F score gain over exact-C on June-July; ties prefer no_id, then fixed_mean, then pitcher_id",
+    "source_gate": {
+      "selection_F_point_gain_at_least": 800.0,
+      "selection_F_pitcher_cluster_95_ci_lower_strictly_positive": true,
+      "confirmation_F_point_gain_at_least": 800.0,
+      "confirmation_F_pitcher_cluster_95_ci_lower_strictly_positive": true,
+      "staged_2023_full_point_and_pitcher_cluster_ci_lower_gain_over_exact_C_and_both_honest_anchors_strictly_above": 132.11992465293324
+    },
+    "on_fail": "close without training or scoring a 2024 specialist",
+    "on_pass": "write an immutable selected-recipe lock and implementation hash before the 2024 run"
+  },
+  "features": {
+    "base": "all official pre-pitch train columns except row_id, control_success, season, and constant game_type",
+    "categorical": [
+      "game_dayofweek",
+      "top_bottom",
+      "base_state",
+      "pitcher_hand",
+      "batter_hand",
+      "pitcher_team_id",
+      "batter_team_id"
+    ],
+    "derived_row_local": [
+      "balls-strikes count state",
+      "pitcher/batter hand matchup",
+      "log1p official pitcher and batter counts",
+      "current-season pitcher success count and smoothed rate reconstructed exactly from the row and frozen prior-season end state",
+      "current-season batter success count and smoothed rate reconstructed exactly in the same way",
+      "the official row-local reverse, middle, recent-game, and pitchmix rates remain available as raw inputs; no non-reconstructible final prior-season component label is invented"
+    ],
+    "frozen_prior": "mean control_success of completed post-break F fit rows only",
+    "smoothing_k": 100.0,
+    "views": {
+      "no_id": "base and derived features with pitcher_id and batter_id removed",
+      "pitcher_id": "no_id plus pitcher_id as a categorical feature",
+      "fixed_mean": "0.5*no_id + 0.5*pitcher_id"
+    }
+  },
+  "model": {
+    "family": "CatBoostClassifier",
+    "loss_function": "Logloss",
+    "iterations": 400,
+    "depth": 5,
+    "learning_rate": 0.04,
+    "l2_leaf_reg": 20.0,
+    "random_seed": 2026,
+    "random_strength": 0.0,
+    "bootstrap_type": "Bayesian",
+    "bagging_temperature": 0.0,
+    "task_type": "GPU",
+    "clipping": [0.000001, 0.999999]
+  },
+  "confirmation_2024": {
+    "authorized_only_after_source_pass": true,
+    "fit": "all 2023 F rows",
+    "evaluate": "all 2024 F rows once",
+    "full_candidate": "selected F specialist on F rows; exact-C unchanged on R rows",
+    "required": {
+      "F_point_gain_over_exact_C_at_least": 800.0,
+      "F_pitcher_cluster_95_ci_lower_positive": true,
+      "full_point_and_pitcher_cluster_ci_lower_gain_over_exact_C_and_both_honest_anchors_strictly_above": 132.11992465293324
+    },
+    "no_recipe_change_after_open": true
+  },
+  "complexity": {
+    "deployed_components": "two for a selected single view, or three for fixed_mean, including the unchanged exact-C R route",
+    "nonnegative_weights": true,
+    "signed_residuals": false
+  },
+  "goal_completion_claimed": false
+}

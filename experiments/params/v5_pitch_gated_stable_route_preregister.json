@@ -1,0 +1,61 @@
+{
+  "experiment_id": "V5_PITCH_GATED_STABLE_ROUTE_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "preregistered_before_any_subgroup_metric_is_read",
+  "hypothesis": "The end-to-end pitch-gated TabM direction was very strong in 2020 but reversed in aggregate in 2021. A small row-local context route may isolate a pitch-choice regime whose marginal control direction persists in both source years without using target-season aggregation or labels at inference.",
+  "immutable_inputs": {
+    "parent_2020": "results/predictions/v4_m3_c_backtest_2020_2020.npz:catboost_outcome",
+    "parent_2021": "results/predictions/v4_m3_c_backtest_2021_2021.npz:catboost_outcome",
+    "challenger_2020": "results/predictions/v5_tabm_pitch_gated_source2020_2020.npz:tabm_pitch_gated",
+    "challenger_2021": "results/predictions/v5_tabm_pitch_gated_source2021_2021.npz:tabm_pitch_gated",
+    "inner_gamma": 0.75,
+    "game_type": "R only; F remains exact parent"
+  },
+  "route_atoms": {
+    "pressure": ["normal", "two_strike", "three_ball", "full"],
+    "count_shape": ["balls_gt_strikes", "balls_eq_strikes", "balls_lt_strikes"],
+    "hand": ["same_hand", "opposite_hand", "batter_left", "batter_right"],
+    "season_evidence_bins": ["n_eq_0", "n_1_49", "n_50_199", "n_200_499", "n_ge_500"]
+  },
+  "candidate_routes": [
+    "one atom",
+    "one conjunction of exactly one pressure/count-shape atom and one hand atom",
+    "one conjunction of exactly one pressure/count-shape atom and one season-evidence atom",
+    "a union of at most three mutually exclusive atoms from one family"
+  ],
+  "constraints": {
+    "minimum_R_coverage_each_source": 0.15,
+    "maximum_route_leaves": 3,
+    "inference_features": "official row-local columns plus completed-train pitcher lifetime boundary used to reconstruct current-season n",
+    "no_target_batch_aggregation": true,
+    "no_target_row_order": true,
+    "no_same_target_calibration": true
+  },
+  "selection": {
+    "objective": "maximize min(2020_R_point_gain, 2021_R_point_gain)",
+    "tie_breakers": [
+      "maximize min pitcher-cluster 95% CI lower gain",
+      "fewer leaves",
+      "larger minimum source coverage",
+      "lexicographic route id"
+    ],
+    "bootstrap_replicates": 2000,
+    "bootstrap_seed": 20260822
+  },
+  "source_gate": {
+    "required_each_year": [
+      "R point gain >= 50 raw score points",
+      "pitcher-cluster 95% CI lower gain > 0",
+      "routed-full point gain > 0"
+    ],
+    "on_fail": "close this route family without reading 2022, 2023, or 2024 challenger predictions",
+    "on_pass": "freeze the exact route expression and implementation hash before generating 2022/2023 challenger predictions"
+  },
+  "eligibility": {
+    "formula_R": "route*[(1-0.75)*exact_C + 0.75*pitch_gated] + (1-route)*exact_C",
+    "formula_F": "exact_C",
+    "outer_components": ["exact_C", "pitch_gated"],
+    "weights_nonnegative_and_sum_to_one_per_row": true,
+    "signed_residual_stack": false
+  }
+}

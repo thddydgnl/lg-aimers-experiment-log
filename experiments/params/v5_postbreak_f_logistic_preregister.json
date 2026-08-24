@@ -1,0 +1,90 @@
+{
+  "experiment_id": "V5_POSTBREAK_F_LOGISTIC_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_before_any_candidate_metric",
+  "hypothesis": "The 2023 F regime break is visible row-locally because exact-C remains near the old regime while official current-season and previous-game rates move to the new regime. A strongly regularized, low-dimensional logistic probability model can learn this disagreement without the variance and extrapolation failure of the prior 40-plus-feature CatBoost F specialist.",
+  "data_contract": {
+    "official_train_only": true,
+    "trackman_used": false,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "test_aggregation_or_order_dependency": false,
+    "future_labels": false,
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "source_protocol": {
+    "season": 2023,
+    "game_type": "F",
+    "parent": "v3_sparse_c_backtest_2023 exact-C",
+    "forward_splits": [
+      {"fit_months": [4], "eval_months": [5]},
+      {"fit_months": [4, 5], "eval_months": [6, 7]},
+      {"fit_months": [4, 5, 6, 7], "eval_months": [8, 9]}
+    ],
+    "selection_rule": "Maximize the minimum F score gain over the three forward evaluation blocks, then combined forward-OOF F gain, then smaller view/C/gamma in the declared order.",
+    "source_gate": {
+      "each_forward_block_F_point_gain_strictly_positive": true,
+      "combined_forward_OOF_F_pitcher_cluster_95_ci_lower_strictly_positive": true,
+      "combined_forward_OOF_F_point_gain_at_least": 400.0,
+      "staged_2023_full_point_and_pitcher_cluster_ci_lower_gain_over_exact_C_and_both_honest_anchors_strictly_above": 132.11992465293324
+    }
+  },
+  "row_local_features": {
+    "current_season_counter": "Subtract the frozen 2022 end pitcher count/success state from each official 2023 asof row; no other target-season row is read at inference.",
+    "posterior": "(current_successes + 50 * exact_C_probability) / (current_n + 50)",
+    "core_view": [
+      "logit_exact_C",
+      "current_season_posterior_k50",
+      "current_season_posterior_minus_exact_C",
+      "current_season_reliability_k50",
+      "log1p_current_season_n",
+      "asof_pitcher_prev1_game_success_rate",
+      "asof_pitcher_prev3_game_success_rate",
+      "asof_pitcher_prev5_game_success_rate",
+      "recent_success_mean",
+      "recent_success_std"
+    ],
+    "extended_view_additions": [
+      "asof_pitcher_prev1_game_middle_rate",
+      "asof_pitcher_prev3_game_middle_rate",
+      "asof_pitcher_prev5_game_middle_rate",
+      "recent_middle_mean",
+      "recent_middle_std",
+      "asof_pitcher_reverse_rate",
+      "asof_pitcher_middle_rate",
+      "asof_pitcher_ball_rate",
+      "asof_pitcher_strike_rate"
+    ],
+    "feature_view_order": ["core", "extended"]
+  },
+  "model": {
+    "family": "sklearn LogisticRegression probability component",
+    "preprocessing": "training-fold median imputation then StandardScaler",
+    "penalty": "L2",
+    "solver": "lbfgs",
+    "max_iter": 1000,
+    "random_state": 2026,
+    "C_grid": [0.001, 0.01, 0.1, 1.0],
+    "outer_parent_blend_gamma_grid": [0.25, 0.5, 0.75, 1.0],
+    "F_formula": "(1-gamma)*exact_C + gamma*logistic_component",
+    "R_formula": "exact_C unchanged",
+    "clipping": [0.000001, 0.999999]
+  },
+  "confirmation_if_source_passes": {
+    "lock_before_reading_2024": true,
+    "fit": "all 2023 F rows with the selected view and C",
+    "evaluate": "all 2024 rows once; selected gamma unchanged",
+    "required_F_same_parent": "point gain and pitcher-cluster 95% CI lower gain both positive",
+    "required_full": "point and pitcher-cluster 95% CI lower gains over exact-C and both honest anchors each strictly exceed 132.11992465293324",
+    "no_recipe_change_after_open": true
+  },
+  "complexity": {
+    "one_reproducible_routed_recipe": true,
+    "outer_components": ["exact_C", "postbreak_F_logistic"],
+    "nonnegative_outer_weights": true,
+    "signed_residual_stack": false,
+    "same_confirmation_fold_fit": false
+  },
+  "goal_completion_claimed": false
+}

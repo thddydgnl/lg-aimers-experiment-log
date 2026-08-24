@@ -1,0 +1,36 @@
+{
+  "experiment_id": "V5_GLOBAL_PAIRWISE_RANK_V1",
+  "status": "locked_before_source_metrics",
+  "hypothesis": "A globally pairwise-trained rank score may capture probability ordering missed by pointwise log-loss; a strictly earlier calibration block converts it to probability before a small exact-C blend.",
+  "source_years": [2020, 2021],
+  "forbidden_years": [2022, 2023, 2024],
+  "route": "R only; F remains exact-C",
+  "history": "official train R rows strictly before target year",
+  "calibration": "last 20 percent by original order within the latest historical season; excluded from ranker fit",
+  "rank_groups": "contiguous deterministic groups of 64 fit rows, no target-derived grouping",
+  "model": {
+    "family": "CatBoostRanker",
+    "loss_function": "PairLogitPairwise",
+    "iterations": 600,
+    "depth": 6,
+    "learning_rate": 0.05,
+    "l2_leaf_reg": 30.0,
+    "random_seed": 2026,
+    "task_type": "GPU"
+  },
+  "calibration_slope_shrink_grid": [0.5, 0.75, 1.0],
+  "blend_gamma_grid": [0.1, 0.25, 0.5, 0.75, 1.0],
+  "source_gate": {
+    "minimum_full_gain_each_year": 30.0,
+    "minimum_R_gain_each_year": 30.0,
+    "pitcher_cluster_95_ci_low_each_year": 0.0
+  },
+  "legality": {
+    "official_data_only": true,
+    "test_rows_read": false,
+    "test_aggregation": false,
+    "row_independent_inference": true,
+    "row_id_feature": false,
+    "original_order_used_only_to_split_historical_training_rows": true
+  }
+}

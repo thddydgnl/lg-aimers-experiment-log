@@ -1,0 +1,64 @@
+{
+  "experiment_id": "V5_MULTINOMIAL_CONTEXT_OFFSET_V1",
+  "status": "preregistered_before_2022_2023_candidate_predictions",
+  "created_at_kst": "2026-08-21",
+  "validation_contract": "experiments/params/v5_validation_contract_v2.json",
+  "hypothesis": "A pitcher current-season success rate loses information about why control failed. Reconstructing the row-local success/reverse/middle/wide mixture from official as-of counters and using it as a multinomial probability offset should let stable count and matchup effects transfer without a high-variance tree residual.",
+  "legality": {
+    "official_data_only": true,
+    "test_rows_read": false,
+    "test_aggregation": false,
+    "row_independent": true,
+    "validation_target_features": false,
+    "historical_outcome_recovery": "next-row counter differences are used only inside the strictly earlier training slice; boundary rows are dropped"
+  },
+  "fixed_recipe": {
+    "route": "R only; every F prediction remains the comparison baseline",
+    "classes": ["success", "reverse", "middle", "wide"],
+    "success_prior": "two-level pitcher posterior: completed-history EB k=1000, current-season EB k=80",
+    "failure_mix_prior": "current-season reverse/middle/remaining-wide rates, EB k=80, normalized inside 1-success",
+    "categorical_context": [
+      "count_state",
+      "hand_matchup",
+      "game_month",
+      "inning_band",
+      "top_bottom",
+      "outs_before",
+      "base_state",
+      "num_runners_on",
+      "score_diff_bin"
+    ],
+    "continuous_context": [
+      "log_current_pitcher_n",
+      "current_reliability_k80",
+      "career_and_recent_pitcher_rates",
+      "career_batter_rates",
+      "career_pitch_mix",
+      "li_and_score_context",
+      "log_offset_probabilities"
+    ],
+    "model": "zero-initialized additive four-class PyTorch lookup/linear model with the reconstructed log probabilities as a fixed offset",
+    "fit_game_types": ["R"],
+    "epochs": 8,
+    "batch_size": 16384,
+    "learning_rate": 0.02,
+    "weight_decay": 0.001,
+    "random_seed": 2026,
+    "development_stem": "v5_multinomial_offset_dev2223",
+    "confirmation_stem": "v5_multinomial_offset_confirm24",
+    "prediction_key": "multinomial_offset"
+  },
+  "selection": {
+    "development_years": [2022, 2023],
+    "unopened_confirmation_year": 2024,
+    "gamma_grid": [0.25, 0.5, 0.75, 1.0],
+    "comparisons": ["exact_parent_C", "v5_honest_m3_r_identity", "v5_honest_m3_r_grid"],
+    "eligibility": "positive R point gain and positive pitcher-cluster 95% R gain lower bound in every development-year/comparison cell",
+    "ranking": "largest minimum R point gain across all cells, then smaller gamma",
+    "failure_rule": "if no gamma is eligible, do not fit or read a 2024 candidate"
+  },
+  "confirmation": {
+    "no_retuning": true,
+    "completion": "V5 validation contract v2 conservative lower score and all package gates"
+  }
+}

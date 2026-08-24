@@ -1,0 +1,86 @@
+{
+  "experiment_id": "V5_TRACKMAN_ARCHETYPE_C_V1",
+  "status": "locked_before_any_control_target_score",
+  "created_local_date": "2026-08-21",
+  "hypothesis": "The 27-dimensional pitch-family repertoire shape discarded by sparse component C may transfer when compressed into a low-dimensional, immutable pitcher archetype rather than exposed as noisy raw group means.",
+  "novelty_audit": {
+    "raw_rich_profiles": "The exact parent retains overall TrackMan moments but deliberately drops all pitch-family rates and physical means.",
+    "stability_and_conditional_profiles": "Previously tested as raw engineered coordinates; no PCA or frozen unsupervised archetype was used.",
+    "supervised_factorization": "Previously failed matchup factorization used control labels, not target-free repertoire geometry."
+  },
+  "data_contract": {
+    "official_open_only": true,
+    "external_data_models_or_predictions": false,
+    "control_success_or_reconstructed_outcome_used_by_archetype": false,
+    "test_rows_read": false,
+    "test_row_aggregation": false,
+    "row_independent_inference": true,
+    "profile_cutoff": "matched R TrackMan seasons strictly before each query row season",
+    "basis_cutoff": "scaler, PCA, and KMeans fit once on official 2019 R TrackMan pitcher profiles and never refit",
+    "development_years": [2022, 2023],
+    "confirmation_year": 2024,
+    "confirmation_locked_until_development_gate": true
+  },
+  "fixed_archetype_recipe": {
+    "groups": ["fastball", "breaking", "offspeed"],
+    "source_coordinates": "three group rates plus sqrt(group_rate) times each group physical mean minus overall pitcher mean for eight TrackMan measurements",
+    "source_dimension": 27,
+    "missing_group_mean": "weighted deviation fixed to zero; the group rate separately records absence",
+    "imputation": "2019 source-feature median",
+    "scaling": "2019 StandardScaler",
+    "pca": {
+      "components": 8,
+      "whiten": true,
+      "random_state": 20260821
+    },
+    "kmeans": {
+      "clusters": 16,
+      "n_init": 50,
+      "max_iter": 500,
+      "random_state": 20260821
+    },
+    "generated_features": "8 PCA coordinates, one categorical cluster, nearest-centroid distance, second-minus-first distance margin, and unseen indicator"
+  },
+  "exact_parent": {
+    "stage": "v3_sparse_c_backtest",
+    "model_key": "catboost_outcome",
+    "features": [
+      "base",
+      "e14",
+      "platoon",
+      "hand_matchup",
+      "e14_hand_cells",
+      "e14_count_cells",
+      "e14_type_count_cells",
+      "trackman_rich",
+      "batter_e14",
+      "batter_middle_e14"
+    ],
+    "outcome_scheme": "reverse_any",
+    "params": "experiments/params/v3_outcome_seed2026.json",
+    "all_feature_drops_smoothing_constants_training_rows_and_seed_held_fixed": true
+  },
+  "candidate_change": {
+    "only_added_feature_flag": "trackman_archetype",
+    "R_predictions_scored_from_candidate": true,
+    "F_predictions_routed_to_exact_parent_for_final_comparison": true
+  },
+  "execution_order": {
+    "target_free_first": "record representation variance and cross-cutoff stability without reading control_success",
+    "first_scored_fold": 2022,
+    "continue_to_2023_only_if": "2022 R point gain and pitcher-cluster 95% CI lower are positive versus exact C and both honest R anchors",
+    "read_2024_only_if": "the unchanged recipe passes every 2022 and 2023 requirement"
+  },
+  "selection_contract": {
+    "primary_scope": "R",
+    "comparison_anchors": [
+      "exact_parent_C",
+      "v5_honest_m3_r_identity",
+      "v5_honest_m3_r_grid"
+    ],
+    "required_point_gain_each_development_year": 0.0,
+    "required_pitcher_cluster_ci_low_each_development_year": 0.0,
+    "eligible_only_if_all_comparisons_pass_both_years": true,
+    "if_failed": "do_not_read_later_locked_years_for_selection_and_close_direction"
+  }
+}

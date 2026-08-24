@@ -1,0 +1,60 @@
+{
+  "experiment_id": "V5_DIRECT_SEASON_UPDATE_SOURCE_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "preregistered_before_any_metric_or_label_from_2022_plus",
+  "hypothesis": "The official cumulative pitcher count and success rate exactly encode the current-season successes before each row. A deterministic empirical-Bayes update should adapt to within-season league and pitcher drift more directly than asking a historical CatBoost model to infer the update from raw features.",
+  "data_contract": {
+    "official_open_data_only": true,
+    "source_years": [2020, 2021],
+    "years_forbidden_during_source": [2022, 2023, 2024],
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "other_evaluation_rows_at_inference": false,
+    "row_independent": true,
+    "automatic_dacon_submission": false
+  },
+  "parent": {
+    "recipe": "exact C",
+    "artifact_pattern": "experiments/results/predictions/v4_m3_c_backtest_{year}_{year}.npz",
+    "prediction_key": "catboost_outcome"
+  },
+  "state_reconstruction": {
+    "n_current": "asof_pitcher_n minus the pitcher count frozen at the end of the preceding season",
+    "s_current": "round(asof_pitcher_success_rate * asof_pitcher_n) minus the pitcher successes frozen at the end of the preceding season",
+    "unseen_pitcher": "preseason n and s are zero",
+    "invalid_row": "zero current evidence and retain the parent",
+    "uses_current_row_only_at_inference": true
+  },
+  "candidate_formulas": {
+    "anchor_posterior": "(s_current + k * parent) / (n_current + k)",
+    "preseason_delta": "parent + n_current/(n_current+k) * (raw_current_rate - preseason_pitcher_rate)",
+    "career_delta": "parent + n_current/(n_current+k) * (raw_current_rate - official_asof_career_rate)"
+  },
+  "k_grid": [10.0, 20.0, 50.0, 100.0, 200.0, 500.0],
+  "routing": {
+    "R": "selected formula and k",
+    "F": "the same selected formula with fixed k=20 to retain rapid response to a possible measurement-regime change",
+    "reason_for_fixed_F_k": "F had a documented 2023 label-regime break, so selecting a slow F update on stable 2020/2021 F labels would answer the wrong question"
+  },
+  "source_selection": {
+    "ranking": [
+      "maximum minimum R score gain across 2020 and 2021",
+      "maximum minimum full score gain",
+      "maximum mean R score gain",
+      "larger k",
+      "formula order as listed"
+    ],
+    "bootstrap_iterations": 2000,
+    "gate": {
+      "minimum_R_gain_each_year": 25.0,
+      "minimum_full_gain_each_year": 25.0,
+      "R_pitcher_cluster_95_ci_lower_strictly_positive": true,
+      "full_pitcher_cluster_95_ci_lower_strictly_positive": true,
+      "R_and_F_point_gain_nonnegative_each_year": true
+    },
+    "on_fail": "close without reading or generating a 2022+ candidate",
+    "on_pass": "freeze formula and k before a fresh 2022/2023 development evaluation"
+  },
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json",
+  "goal_completion_claimed": false
+}

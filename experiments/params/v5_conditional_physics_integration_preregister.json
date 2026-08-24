@@ -1,0 +1,56 @@
+{
+  "experiment_id": "V5_CONDITIONAL_PHYSICS_INTEGRATION_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_before_control_evaluation",
+  "signal_source": "experiments/results/v5_conditional_physics_integration_signal_source.json",
+  "frozen_parent": {
+    "name": "exact_C",
+    "model_key": "catboost_outcome",
+    "artifacts": {
+      "2020": "experiments/results/predictions/v4_m3_c_backtest_2020_2020.npz",
+      "2021": "experiments/results/predictions/v4_m3_c_backtest_2021_2021.npz"
+    }
+  },
+  "directions": {
+    "integrated_full": "blend exact-C toward the conditional physics-teacher repertoire mean",
+    "integrated_control": "blend exact-C toward the conditional control-teacher repertoire mean",
+    "physics_delta": "add conditional physics-teacher minus control-teacher repertoire mean to exact-C"
+  },
+  "gamma_grid": [0.1, 0.25, 0.5, 0.75, 1.0],
+  "routing": "Apply the selected direction only on game_type R; preserve exact-C on F.",
+  "selection_order": [
+    "maximum minimum R gain across 2020/2021",
+    "maximum minimum full gain",
+    "maximum mean R gain",
+    "smaller gamma",
+    "integrated_full then integrated_control then physics_delta on an exact tie"
+  ],
+  "source_protocol": {
+    "years": [2020, 2021],
+    "years_forbidden_until_pass": [2022, 2023, 2024],
+    "bootstrap_iterations": 2000,
+    "gate": {
+      "minimum_R_gain_each_year": 25.0,
+      "minimum_full_gain_each_year": 25.0,
+      "R_pitcher_cluster_95_ci_lower_strictly_positive_each_year": true,
+      "full_pitcher_cluster_95_ci_lower_strictly_positive_each_year": true,
+      "native_pitcher_R_point_gain_nonnegative_each_year": true,
+      "fallback_R_point_gain_nonnegative_each_year": true
+    }
+  },
+  "semantic_gate": {
+    "signal_source_status": "source_pass",
+    "signal_source_downstream_control_metrics_read": false,
+    "row_alignment_exact": true,
+    "current_validation_trackman_used": false,
+    "validation_labels_used_to_construct_signal": false
+  },
+  "advance_rule": "Freeze one direction and gamma only if every source point, CI, native, and fallback requirement passes; otherwise close without generating a 2022+ candidate.",
+  "data_contract": {
+    "official_data_only": true,
+    "test_rows_read": false,
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "goal_completion_claimed": false
+}

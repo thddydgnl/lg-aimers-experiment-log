@@ -1,0 +1,45 @@
+{
+  "experiment_id": "V5_MATCHUP_HAND_FINE_PITCH_MOE_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_before_control_source_metrics",
+  "selector_lock": "experiments/params/v5_expanded_matchup_pitch_selector_lock.json",
+  "hypothesis": "The source-stable pitcher-by-batter-hand/count selector improves marginalization of the already established eight fine-pitch control experts enough to repair the predecessor's weak 2021 source fold.",
+  "source_protocol": {
+    "years": [2020, 2021],
+    "parent": "exact C",
+    "route": "candidate blend on R rows only; exact C on F",
+    "ranking": "maximize minimum R gain, then minimum full gain, then mean R gain, then smaller gamma",
+    "top_level_blend_grid": [0.1, 0.25, 0.5, 0.75, 1.0],
+    "bootstrap_iterations": 2000,
+    "gate": {
+      "minimum_R_gain_each_year": 50.0,
+      "minimum_full_gain_each_year": 0.0,
+      "R_pitcher_cluster_95_ci_lower_positive_each_year": true,
+      "full_pitcher_cluster_95_ci_lower_positive_each_year": true,
+      "selector_lock_reproduced_each_year": true
+    },
+    "on_fail": "Close without reading 2022, 2023, or 2024 control metrics.",
+    "on_pass": "Freeze gamma before fresh 2022/2023 development folds."
+  },
+  "candidate": {
+    "model": "catboost_fine_pitch_moe",
+    "params": "experiments/params/v5_expanded_fine_pitch_moe_catboost.json",
+    "outcome_scheme": "reverse_any",
+    "expert_count": 8,
+    "expert_features": "exact-C feature view with every e92 selector column excluded",
+    "selector_feature": "matchup_hand_auto_pitch_latent",
+    "selector_recipe": "geometric_count_hand__cb0.5",
+    "training_selector_columns_consumed_by_experts": false,
+    "current_pitch_type_at_inference": false,
+    "current_pitch_trackman_at_inference": false,
+    "row_independent_inference": true
+  },
+  "data_contract": {
+    "official_train_and_trackman_only": true,
+    "external_data_or_api": false,
+    "future_labels_or_future_trackman": false,
+    "test_rows_read": false,
+    "automatic_dacon_submission": false
+  },
+  "goal_completion_claimed": false
+}

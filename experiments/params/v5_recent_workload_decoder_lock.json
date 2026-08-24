@@ -1,0 +1,29 @@
+{
+  "experiment_id": "V5_RECENT_WORKLOAD_DECODER_V1_LOCK",
+  "created_at_kst": "2026-08-22",
+  "source_evidence": "experiments/results/v5_recent_workload_decoder_source.json",
+  "source_status_required": "source_pass",
+  "locked_recipe": {
+    "horizons": [1, 3, 5],
+    "lower_decoder": "experiments.run_v2_rolling.build_recent_denominator_features",
+    "auxiliary_model": "CatBoost MultiClass with parameters from v5_recent_workload_decoder_preregister.json",
+    "outer_validation_fit": "all appearances with season below the outer validation season",
+    "main_training_features": "leave-one-season-out auxiliary predictions inside the outer history",
+    "profile_training": "leave-one-appearance-out workload profile",
+    "profile_prediction": "completed-history frozen workload profile",
+    "mode_rule": "argmax multiplier class times the LCM lower denominator, capped by the preregistered horizon maximum",
+    "row_local_outputs": [
+      "mode multiplier, mode workload, log workload, P(multiplier=1), multiplier entropy",
+      "success and middle counts implied by mode workload",
+      "fixed-K20 success posterior using prior 0.5 and workload reliability",
+      "nested 2-3 and 4-5-game workload and outcome-rate differences with validity flags"
+    ],
+    "within_appearance_varying_inputs_excluded": true
+  },
+  "source_metrics": {
+    "minimum_exact_accuracy_gain": 0.03325795786638963,
+    "minimum_mae_reduction_fraction": 0.3744060837267633
+  },
+  "no_control_success_used_for_lock": true,
+  "goal_completion_claimed": false
+}

@@ -1,0 +1,76 @@
+{
+  "experiment_id": "V5_FINE_PITCHTYPE_LATENT_V1",
+  "created_before_source_predictions": true,
+  "hypothesis": "The four coarse pitch groups hide control-relevant repertoire differences within fastballs and breaking balls. Historical fine pitch labels can define pitcher-by-fine-type control residuals, while a classifier using only legal pre-pitch row fields can marginalize those residuals without observing the current pitch type at inference.",
+  "relationship_to_prior_work": {
+    "v5_pitchtype_moe": "used only four coarse groups and four subset-trained outcome experts",
+    "v4_pitchtype_failure_prior": "used empirical contextual pitch counts around a V4 research ensemble; this experiment uses an out-of-time CatBoost fine-type selector, exact-C source anchors, and the V5 source gate",
+    "current_pitch_trackman": "true fine type is diagnostic-only and can never enter a deployable prediction"
+  },
+  "policy": {
+    "official_open_data_only": true,
+    "external_data": false,
+    "test_rows_read": false,
+    "row_independent": true,
+    "current_pitch_type_at_inference": false,
+    "current_pitch_trackman_at_inference": false
+  },
+  "source_protocol": {
+    "years": [2020, 2021],
+    "history": "season strictly less than source year",
+    "later_control_labels_forbidden": [2022, 2023, 2024],
+    "route": "R rows only; F predictions remain exact-C",
+    "anchors": [
+      "experiments/results/predictions/v4_m3_c_backtest_2020_2020.npz",
+      "experiments/results/predictions/v4_m3_c_backtest_2021_2021.npz"
+    ]
+  },
+  "fine_types": [
+    "Fastball",
+    "Slider",
+    "Curveball",
+    "ChangeUp",
+    "Splitter",
+    "Sinker",
+    "Cutter",
+    "Other"
+  ],
+  "label_sources": ["tagged", "auto"],
+  "selector": {
+    "family": "CatBoost MultiClass",
+    "features": "official pre-pitch base columns including historical IDs and asof rates",
+    "iterations": 400,
+    "depth": 6,
+    "learning_rate": 0.06,
+    "l2_leaf_reg": 20.0,
+    "selector_probability_weight_grid": [0.5, 0.75, 1.0]
+  },
+  "control_prior": {
+    "target": "control_success minus its matched R season mean",
+    "cells": "pitcher_id by historical fine pitch type",
+    "outcome_k_grid": [10.0, 50.0, 100.0],
+    "repertoire_k_grid": [50.0, 200.0],
+    "correction": "expected contextual fine-type residual minus frozen historical repertoire expectation"
+  },
+  "probability_correction_scale_grid": [0.1, 0.25, 0.5, 0.75, 1.0, 1.5],
+  "selection_rule": "maximize the minimum exact-C full-score gain across 2020 and 2021, then minimum R gain, with all probability weights and correction scales fixed from this source screen",
+  "source_gate": {
+    "minimum_full_gain_each_year": 5.0,
+    "minimum_R_gain_each_year": 5.0,
+    "pitcher_cluster_95pct_ci_lower_positive_each_year": true,
+    "diagnostic_oracle_full_equivalent_minimum": 132.11992465,
+    "all_conditions_required": true
+  },
+  "diagnostic_oracle": {
+    "uses_true_fine_pitch_type_on_matched_historical_validation_rows": true,
+    "permitted_use": "information-ceiling diagnosis only",
+    "forbidden_use": [
+      "candidate selection",
+      "Goal completion",
+      "2025 inference",
+      "submission packaging"
+    ]
+  },
+  "next_step_if_pass": "preregister a shared fine-type conditional model before reading 2022 labels",
+  "next_step_if_fail": "close the fine-pitch latent axis without opening 2022 or later labels"
+}

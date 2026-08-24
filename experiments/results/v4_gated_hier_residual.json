@@ -1,0 +1,149 @@
+{
+  "protocol": {
+    "official_train_only": true,
+    "external_prediction_artifacts_used": false,
+    "public_method_only": "v19 context plus v20 gated hierarchical residual recipe",
+    "selection_target": 2023,
+    "selection_source": [
+      2022
+    ],
+    "confirmation_target": 2024,
+    "confirmation_sources": [
+      2022,
+      2023
+    ],
+    "test_rows_read": false,
+    "apply_route": "R only",
+    "row_independent_inference": true
+  },
+  "fixed_recipe": {
+    "context": {
+      "count": {
+        "keys": [
+          "count_state"
+        ],
+        "weight": 0.25
+      },
+      "count_hands": {
+        "keys": [
+          "count_state",
+          "pitcher_hand",
+          "batter_hand"
+        ],
+        "weight": 0.25
+      },
+      "base": {
+        "keys": [
+          "base_state"
+        ],
+        "weight": 0.5
+      }
+    },
+    "primary": {
+      "keys": [
+        "pitcher_id",
+        "batter_hand"
+      ],
+      "k": 800.0,
+      "weight": 0.15,
+      "gate": "pitcher_hand2_or_F"
+    },
+    "secondary": {
+      "keys": [
+        "pitcher_id",
+        "count_state"
+      ],
+      "k": 1600.0,
+      "weight": 0.4,
+      "gate": "pitcher_hand1_and_R"
+    }
+  },
+  "screens": {
+    "all": {
+      "gamma_fit_2023_raw": 0.9484289233577106,
+      "gamma_fit_2023": 0.9484289233577106,
+      "gain_fit_2023": 7.2602958641754185,
+      "passes_gate": true,
+      "diagnostics": {
+        "2023": {
+          "source_rows": 247472,
+          "context_table_rows": {
+            "count": 12,
+            "count_hands": 48,
+            "base": 8
+          },
+          "primary_rows": 775,
+          "secondary_rows": 4453,
+          "direction_std_r": 0.0037001871004043417,
+          "direction_max_abs": 0.017655519513780915
+        },
+        "2024": {
+          "source_rows": 492997,
+          "context_table_rows": {
+            "count": 12,
+            "count_hands": 48,
+            "base": 8
+          },
+          "primary_rows": 961,
+          "secondary_rows": 5605,
+          "direction_std_r": 0.0035366367152385903,
+          "direction_max_abs": 0.02694260708818963
+        }
+      }
+    },
+    "R": {
+      "gamma_fit_2023_raw": 0.7606638892828297,
+      "gamma_fit_2023": 0.7606638892828297,
+      "gain_fit_2023": 4.591266425291224,
+      "passes_gate": true,
+      "diagnostics": {
+        "2023": {
+          "source_rows": 217024,
+          "context_table_rows": {
+            "count": 12,
+            "count_hands": 48,
+            "base": 8
+          },
+          "primary_rows": 561,
+          "secondary_rows": 3296,
+          "direction_std_r": 0.004187871356702915,
+          "direction_max_abs": 0.021175569952945394
+        },
+        "2024": {
+          "source_rows": 436863,
+          "context_table_rows": {
+            "count": 12,
+            "count_hands": 48,
+            "base": 8
+          },
+          "primary_rows": 727,
+          "secondary_rows": 4290,
+          "direction_std_r": 0.003435603435299971,
+          "direction_max_abs": 0.01822470384990088
+        }
+      }
+    }
+  },
+  "selected_source_route": "all",
+  "selected_gamma": 0.9484289233577106,
+  "base_scores": {
+    "2023": -887.2151067872869,
+    "2024": 1027.2375671634748
+  },
+  "final_scores": {
+    "2023": -879.9548109231115,
+    "2024": 1020.3113019018107
+  },
+  "gains": {
+    "2023": 7.2602958641754185,
+    "2024": -6.926265261664071
+  },
+  "expected_lb_median": 1160.4588853434107,
+  "required_local_score": 1049.8524165584,
+  "crosses_required_local_score": false,
+  "prediction_artifacts": {
+    "2023": "experiments\\results\\predictions\\v4_gated_hier_residual_2023.npz",
+    "2024": "experiments\\results\\predictions\\v4_gated_hier_residual_2024.npz"
+  },
+  "warning": "2024 is diagnostic confirmation and was not used for selection."
+}

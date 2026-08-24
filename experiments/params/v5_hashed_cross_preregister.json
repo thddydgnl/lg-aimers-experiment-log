@@ -1,0 +1,88 @@
+{
+  "experiment_id": "V5_HASHED_CROSS_AVERAGED_LOGISTIC_V1",
+  "status": "locked_before_source_metrics",
+  "locked_at_kst": "2026-08-22",
+  "hypothesis": "Native tree models repeatedly overfit unstable fine partitions, while the existing linear baseline omits high-cardinality player-context crosses. A signed-hashed, strongly regularized averaged logistic model can estimate many explicit pitcher/batter/context effects with global shrinkage, then contribute a low-correlation R-only correction to exact-C.",
+  "novelty_audit": {
+    "existing_linear": "v2 linear used the base+E14 columns with ordinary one-hot encoding and no explicit high-cardinality player-context cross library.",
+    "existing_factorization": "v5 matchup factorization imposed low-rank pitcher-batter structure. This candidate instead uses independently shrunk sparse crosses and no latent factorization.",
+    "existing_catboost": "CatBoost categorical CTRs are nonlinear target statistics; this candidate is a convex sparse linear model with averaged SGD and signed hashing.",
+    "roadmap_reference": "research/ANALOGOUS_DATA_METHODS_AND_EXPERIMENTS.md A40"
+  },
+  "legality": {
+    "official_open_data_only": true,
+    "custom_inputs": "current row raw columns and official row-local asof_* values only",
+    "external_data_model_predictions_or_api": false,
+    "future_labels": false,
+    "test_rows_read": false,
+    "evaluation_row_aggregation_order_or_distribution": false,
+    "row_id_used_as_feature": false,
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "candidate_family": {
+    "fit_route": "historical R rows only",
+    "inference_route": "F rows remain exactly parent; only R rows receive the candidate blend",
+    "feature_contract": "fixed semantic bins, main effects, and the explicit crosses defined in run_v5_hashed_cross_source.py; no learned target encoder",
+    "hashing": {
+      "signed": true,
+      "dimensions": [262144, 1048576]
+    },
+    "model": {
+      "class": "sklearn.linear_model.SGDClassifier",
+      "loss": "log_loss",
+      "penalty": "l2",
+      "alphas": [0.00003, 0.0001, 0.0003],
+      "max_iter": 20,
+      "tol": 0.0001,
+      "average": true,
+      "random_state": 2026
+    },
+    "blend_grid": [0.1, 0.25, 0.5, 0.75, 1.0],
+    "selection_order": [
+      "maximize minimum full-score gain over 2020 and 2021",
+      "maximize minimum R-score gain over 2020 and 2021",
+      "maximize mean full-score gain",
+      "prefer stronger alpha",
+      "prefer smaller hash dimension",
+      "prefer smaller gamma"
+    ],
+    "collision_robustness": "The selected alpha must also have positive minimum R gain at the other locked hash dimension.",
+    "maximum_selected_components": 2
+  },
+  "parent": {
+    "recipe": "exact component C",
+    "source_artifacts": {
+      "2020": "experiments/results/predictions/v4_m3_c_backtest_2020_2020.npz",
+      "2021": "experiments/results/predictions/v4_m3_c_backtest_2021_2021.npz"
+    }
+  },
+  "source_protocol": {
+    "years": [2020, 2021],
+    "latest_label_season_read": 2021,
+    "history_rule": "season strictly before validation season",
+    "advance_gate": {
+      "minimum_full_gain_each_year": 50.0,
+      "minimum_R_gain_each_year": 50.0,
+      "full_pitcher_cluster_95_ci_low_each_year": 0.0,
+      "R_pitcher_cluster_95_ci_low_each_year": 0.0,
+      "other_dimension_minimum_R_gain": 0.0
+    },
+    "bootstrap_iterations": 2000,
+    "on_fail": "Close hashed-cross averaged logistic without reading 2022+ candidate labels.",
+    "on_pass": "Freeze dimension, alpha, gamma, and feature contract before untouched 2022/2023 development."
+  },
+  "development_protocol_if_source_passes": {
+    "years": [2022, 2023],
+    "required_minimum_full_gain_against_exact_parent_and_both_honest_anchors": 132.11992465293324,
+    "required_pitcher_cluster_ci_lower_positive": true,
+    "lock_before_2024": true
+  },
+  "completion": {
+    "source_or_development_metrics_cannot_complete_goal": true,
+    "2024_must_remain_unread_until_recipe_lock": true,
+    "conservative_expected_lb_lower_must_exceed": 1190.0,
+    "actual_submission_is_manual": true
+  },
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json"
+}

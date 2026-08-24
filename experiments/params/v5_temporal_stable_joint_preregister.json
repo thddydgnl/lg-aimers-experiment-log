@@ -1,0 +1,87 @@
+{
+  "experiment_id": "V5_TEMPORAL_STABLE_JOINT_DIRECT_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "preregistered_before_candidate_predictions_or_source_metrics",
+  "hypothesis": "The V18 public improvement came from pitcher-by-batter-hand and pitcher-by-pressure-by-batter-hand effects that survived a strict next-season transfer. Feeding the same frozen conditional state into an independently trained direct outcome model may capture the signal without an ineligible signed residual correction.",
+  "immutable_parent": {
+    "recipe": "exact_C",
+    "artifacts": {
+      "2020": "experiments/results/predictions/v4_m3_c_backtest_2020_2020.npz:catboost_outcome",
+      "2021": "experiments/results/predictions/v4_m3_c_backtest_2021_2021.npz:catboost_outcome"
+    },
+    "features": [
+      "base",
+      "e14",
+      "platoon",
+      "hand_matchup",
+      "e14_hand_cells",
+      "e14_count_cells",
+      "e14_type_count_cells",
+      "trackman_rich",
+      "batter_e14",
+      "batter_middle_e14"
+    ],
+    "model": "catboost_outcome",
+    "outcome_scheme": "reverse_any",
+    "params": "experiments/params/v3_outcome_seed2026.json",
+    "drop_features": "identical to exact_C, including raw pitcher_id and the 40 pitch-class-specific e58 columns"
+  },
+  "single_change": "append temporal_stable_joint numeric features; every other exact_C setting is unchanged",
+  "temporal_stable_joint": {
+    "source_scope": "regular-season rows only",
+    "training_encoding": "for each training season, use that season's source table with the row's own target removed",
+    "validation_encoding": "use the latest completed regular-season source table only",
+    "pressure_state": {
+      "normal": "balls < 3 and strikes < 2",
+      "three_ball": "balls == 3 and strikes < 2",
+      "two_strike": "balls < 3 and strikes == 2",
+      "full": "balls == 3 and strikes == 2"
+    },
+    "hierarchy": [
+      "league -> pitcher, K=100",
+      "pitcher -> pitcher*batter_hand, K=38",
+      "pitcher*batter_hand -> pitcher*pressure*batter_hand, K=30"
+    ],
+    "numeric_features_per_level": [
+      "posterior rate",
+      "delta from parent",
+      "reliability",
+      "log count",
+      "reliability-weighted delta",
+      "posterior standard deviation"
+    ],
+    "feature_count": 18,
+    "same_season_self_target_used": false,
+    "target_season_labels_used": false,
+    "target_batch_statistics_used": false,
+    "row_order_used": false
+  },
+  "source_protocol": {
+    "years": [2020, 2021],
+    "candidate_stage_prefix": "v5_temporal_stable_joint_source",
+    "blend_gamma_grid": [0.1, 0.25, 0.5, 0.75, 1.0],
+    "formula_R": "(1-gamma)*exact_C + gamma*temporal_stable_joint_direct",
+    "formula_F": "exact_C",
+    "selection": "maximize min(2020 R raw gain, 2021 R raw gain); ties use mean R gain, CI lower bound, then smaller gamma",
+    "bootstrap_unit": "pitcher_id cluster",
+    "bootstrap_replicates": 2000,
+    "bootstrap_seed": 20260822,
+    "gate": {
+      "minimum_R_raw_gain_each_year": 50.0,
+      "minimum_R_cluster_CI_lower_each_year": 0.0,
+      "minimum_routed_full_raw_gain_each_year": 0.0
+    },
+    "on_fail": "close this family without generating 2022, 2023, or 2024 candidate predictions",
+    "on_pass": "freeze gamma and implementation hash before opening later folds"
+  },
+  "contract_eligibility": {
+    "outer_components": ["exact_C", "temporal_stable_joint_direct"],
+    "weights_nonnegative": true,
+    "weights_sum_to_one_per_row": true,
+    "signed_residual_stack": false,
+    "official_data_only": true,
+    "external_api_or_data": false,
+    "test_aggregation": false,
+    "automatic_submission": false
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "contract_id": "V5_VALIDATION_CONTRACT_V2_HONEST_ANCHOR",
+  "created_at_kst": "2026-08-21",
+  "status": "locked_before_any_new_post_audit_candidate_confirmation",
+  "reason_for_revision": "The prior v3_sparse_m3_frozen development anchor applied weights and affine calibration selected on 2024 retroactively to 2022 and 2023. This made upward-mean candidate directions look falsely stable.",
+  "supersedes": {
+    "scope": "only historical-baseline construction and the definition of score deltas in V5 contract v1",
+    "does_not_relax": [
+      "1190 threshold",
+      "0.75 haircut",
+      "2024 lock-before-open rule",
+      "candidate complexity cap",
+      "official-data and row-independence rules",
+      "package verification gates"
+    ]
+  },
+  "data_rules": {
+    "official_train_and_trackman_only": true,
+    "external_data_or_api": false,
+    "test_row_aggregation": false,
+    "future_labels_or_future_trackman": false,
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "folds": {
+    "development": [2022, 2023],
+    "locked_confirmation": 2024,
+    "deployment_target": 2025,
+    "F_regime_rule": "Primary transfer gates use R. F must remain an unchanged parent prediction or use a separately preregistered post-break recipe."
+  },
+  "same_parent_gate": {
+    "definition": "A feature/model ablation is first compared with the exact parent recipe on every target fold, with all training data, seeds, features and routing other than the preregistered change held fixed.",
+    "requirements": [
+      "positive R point gain in both 2022 and 2023",
+      "positive pitcher-cluster 95% R gain lower bound in both 2022 and 2023",
+      "recipe and any blend coefficient locked before reading 2024",
+      "positive 2024 R point gain and positive pitcher-cluster 95% R gain lower bound"
+    ]
+  },
+  "honest_anchors": {
+    "target_rule": "For target season Y, select all meta parameters using season Y-1 only and transfer them unchanged to Y.",
+    "components": ["V3_A", "V3_C", "V3_B"],
+    "weight_constraints": "nonnegative and sum to one",
+    "fit_scope": "R",
+    "required_variants": {
+      "v5_honest_m3_r_identity": {
+        "calibration": "slope=1.0, offset=0.0"
+      },
+      "v5_honest_m3_r_grid": {
+        "calibration_grid": {
+          "slope": [1.0, 1.05, 1.1],
+          "offset": [-0.004, -0.006, -0.008]
+        },
+        "selection": "minimum source-season R Brier"
+      }
+    },
+    "published_v3_role": "v3_sparse_m3_frozen is retained as the actual 1090.9100565103 leaderboard deployment reference, not as the historical development anchor."
+  },
+  "candidate_complexity": {
+    "eligible_without_actual_lb": [
+      "one reproducible recipe",
+      "at most three nonnegative components whose fixed weights sum to one"
+    ],
+    "ineligible_without_actual_lb": [
+      "signed residual stacks",
+      "four or more free weights",
+      "conditional gates fitted on the confirmation fold",
+      "same-target-fold calibration or ensemble fitting"
+    ]
+  },
+  "conservative_score": {
+    "actual_v3_anchor": 1090.9100565103,
+    "required_raw_gain_for_1190_at_haircut": 132.11992465293324,
+    "G_dev": "minimum full-score gain over 2022 and 2023 across the exact-parent comparison and both required honest anchors",
+    "G_confirm": "minimum locked 2024 full-score point gain across the exact-parent comparison and both required honest anchors",
+    "G_ci": "minimum locked 2024 pitcher-cluster 95% full-score gain lower bound across the exact-parent comparison and both required honest anchors",
+    "G_robust": "min(G_dev, G_confirm, G_ci)",
+    "haircut": 0.75,
+    "expected_lb_lower": "1090.9100565103 + 0.75 * max(0, G_robust)",
+    "goal_pass": "expected_lb_lower > 1190 or actual DACON LB > 1190"
+  },
+  "retracted_evidence": [
+    "V5_RECENT_DENOMINATOR_C_V1 development selection versus v3_sparse_m3_frozen",
+    "V5_H2_CONDITIONAL_HISTORY development selection versus v3_sparse_m3_frozen",
+    "v5_transfer_catalog rankings versus v3_sparse_m3_frozen"
+  ],
+  "audit_artifact": "experiments/results/v5_anchor_honesty_audit.json"
+}

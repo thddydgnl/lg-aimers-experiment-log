@@ -1,0 +1,41 @@
+{
+  "experiment_id": "V5_DIRECT_SEASON_UPDATE_R_LOCK_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_after_2020_2021_source_discovery_before_any_2022_or_2023_metric",
+  "source_discovery": {
+    "report": "experiments/results/v5_direct_season_update_source.json",
+    "report_sha256": "91cf43fe8c8d7236ee7d0dab48adf85131893b9d350d6cc04384dd45e890aca2",
+    "finding": "The selected anchor-posterior update was strongly positive on R in both source years, but the F update was contaminated by earlier R history for pitchers who changed game type.",
+    "R_point_gains": {"2020": 230.1201058187541, "2021": 85.58822216185865},
+    "R_cluster_ci_lowers": {"2020": 178.0487309906039, "2021": 41.883337084745065}
+  },
+  "locked_recipe": {
+    "parent": "exact C catboost_outcome",
+    "R_formula": "(s_current + 500 * parent) / (n_current + 500)",
+    "R_k": 500.0,
+    "F_formula": "parent unchanged",
+    "route": "game_type R only",
+    "clipping": [0.000001, 0.999999],
+    "free_weights": 0
+  },
+  "development_protocol": {
+    "years": [2022, 2023],
+    "fresh_state_reconstruction": true,
+    "same_parent_R_gate": "positive point and pitcher-cluster 95% CI lower bound versus exact C in both years",
+    "anchors": ["exact C", "v5_honest_m3_r_identity", "v5_honest_m3_r_grid"],
+    "G_dev": "minimum full-score gain across both years and all three anchors",
+    "minimum_G_dev_strictly_greater_than": 132.11992465293324,
+    "on_fail": "close without reading a 2024 candidate",
+    "on_pass": "hash-lock the recipe and development artifacts before a single 2024 run"
+  },
+  "data_contract": {
+    "official_open_data_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "other_evaluation_rows_at_inference": false,
+    "row_independent": true,
+    "automatic_dacon_submission": false
+  },
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json",
+  "goal_completion_claimed": false
+}

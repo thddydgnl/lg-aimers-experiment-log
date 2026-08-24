@@ -1,0 +1,74 @@
+{
+  "experiment_id": "V5_EXPANDED_DENSE_PHYSICS_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_before_candidate_predictions",
+  "hypothesis": "The dense physics pitch-group MoE was source-positive but unstable in 2023. Replacing exact-game-only historical TrackMan profiles with the locked 1.5x official major-team profile source may improve both its pitch-group selector and same-group expert physics estimates.",
+  "frozen_predecessor": {
+    "experiment": "V5_DENSE_PHYSICS_PITCHTYPE_MOE_V1",
+    "report": "experiments/results/v5_dense_physics_pitchtype_moe_source_gate.json",
+    "gamma": 0.5,
+    "development_failure": "experiments/results/v5_dense_physics_seed_ensemble_dev.json"
+  },
+  "profile_source": "experiments/results/v5_expanded_trackman_profiles_source.json",
+  "candidate": {
+    "model": "catboost_dense_pitchtype_moe",
+    "params": "experiments/params/v5_dense_physics_pitchtype_moe_catboost.json",
+    "features": [
+      "base",
+      "e14",
+      "platoon",
+      "hand_matchup",
+      "e14_hand_cells",
+      "e14_count_cells",
+      "e14_type_count_cells",
+      "trackman_rich",
+      "batter_e14",
+      "batter_middle_e14",
+      "pitchmix_e14",
+      "expanded_trackman_profiles"
+    ],
+    "drop_features": ["pitcher_id"],
+    "outcome_scheme": "reverse_any",
+    "inner_validation": "none",
+    "e14_k": 50,
+    "k_pitcher": 50,
+    "k_platoon": 50,
+    "batter_e14_k": 80,
+    "batter_middle_k": 100,
+    "pitchmix_k": 20,
+    "routing": "F remains exact-C; R = exact-C + 0.5 * (expanded dense physics raw - exact-C)"
+  },
+  "source_protocol": {
+    "years": [2020, 2021],
+    "years_forbidden_until_pass": [2022, 2023, 2024],
+    "bootstrap_iterations": 2000,
+    "exact_parent_gate": {
+      "minimum_full_gain_each_year": 25.0,
+      "minimum_R_gain_each_year": 25.0,
+      "pitcher_cluster_95_ci_lower_positive_each_year": true
+    },
+    "predecessor_increment_gate": {
+      "minimum_full_gain_over_frozen_predecessor_each_year": 5.0,
+      "minimum_R_gain_over_frozen_predecessor_each_year": 5.0,
+      "selector_log_loss_strictly_lower_each_year": true,
+      "selector_top1_accuracy_not_lower_each_year": true
+    }
+  },
+  "semantic_gate": {
+    "minimum_history_dense_label_coverage_each_year": 0.995,
+    "minimum_history_trackman_group_agreement_each_year": 0.9,
+    "minimum_profile_row_expansion_factor_each_year": 1.5,
+    "minimum_identity_purity": 0.99,
+    "current_pitch_group_used_at_inference": false,
+    "current_validation_trackman_used": false,
+    "row_independent_routing": true
+  },
+  "advance_rule": "Advance the unchanged gamma=0.5 recipe only if both exact-parent and genuinely-new predecessor-increment gates pass. Otherwise close without reading any new 2022+ candidate prediction.",
+  "data_contract": {
+    "official_train_and_trackman_only": true,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "automatic_dacon_submission": false
+  },
+  "goal_completion_claimed": false
+}

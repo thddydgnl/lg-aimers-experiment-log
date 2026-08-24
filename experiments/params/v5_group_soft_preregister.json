@@ -1,0 +1,86 @@
+{
+  "experiment_id": "V5_HIERARCHICAL_GROUP_SOFT_V1",
+  "status": "locked_before_source_metrics",
+  "locked_at_kst": "2026-08-22",
+  "hypothesis": "Pitch-level Bernoulli labels are too noisy for the small seasonal transfer problem. A leave-one-row-out empirical-Bayes hierarchy over completed historical pitcher-season, batter-season, count and hand contexts supplies a stable probability target. A CatBoost Brier regressor can learn this probability surface from exact-C row features without inspecting any validation or test aggregate.",
+  "novelty_audit": {
+    "distinct_from_e14": "E14 exposes frozen and as-of features but still fits hard pitch labels. This experiment changes the training estimand to a completed-history hierarchical probability.",
+    "distinct_from_teacher_runs": "Earlier teacher experiments used model predictions or TrackMan physics as soft targets. This target is an analytic leave-one-out hierarchy made only from official completed-history outcomes.",
+    "distinct_from_hierarchical_features": "Earlier H1/H2/H4 paths supplied target-rate features while retaining hard labels. Here the hierarchy is the supervised target and is not available as an inference feature.",
+    "not_a_minor_hyperparameter_change": true
+  },
+  "legality": {
+    "official_open_data_only": true,
+    "external_data_model_predictions_or_api": false,
+    "future_validation_labels": false,
+    "historical_row_removed_from_own_aggregate": true,
+    "test_rows_read_or_aggregated": false,
+    "row_independent_inference": true,
+    "automatic_dacon_submission": false
+  },
+  "parent": {
+    "recipe": "exact component C",
+    "source_artifacts": {
+      "2020": "experiments/results/predictions/v4_m3_c_backtest_2020_2020.npz",
+      "2021": "experiments/results/predictions/v4_m3_c_backtest_2021_2021.npz"
+    }
+  },
+  "candidate": {
+    "model": "CatBoostRegressor RMSE on hierarchical leave-one-out empirical-Bayes probability",
+    "feature_recipe": "identical to exact component C",
+    "fit_rows": "historical game_type R only",
+    "hierarchy": [
+      "game_type",
+      "season x game_type",
+      "pitcher x season x game_type",
+      "batter x season x game_type",
+      "season x game_type x count x hands",
+      "pitcher x season x game_type x count x batter_hand"
+    ],
+    "fixed_strengths": {
+      "base": 512.0,
+      "pitcher": 96.0,
+      "batter": 160.0,
+      "context": 384.0,
+      "local": 32.0
+    },
+    "hard_label_fraction_grid": [0.0, 0.25, 0.5],
+    "R_blend_formula": "clip((1-gamma)*parent_exact_C + gamma*group_soft, 1e-6, 1-1e-6)",
+    "gamma_grid": [0.1, 0.25, 0.5, 0.75, 1.0],
+    "F_routing": "unchanged exact-C parent",
+    "selection_order": [
+      "maximize minimum full-score gain over 2020 and 2021",
+      "maximize minimum R-score gain over 2020 and 2021",
+      "maximize mean full-score gain",
+      "prefer larger hard-label fraction, then smaller gamma"
+    ],
+    "maximum_selected_components": 2
+  },
+  "source_protocol": {
+    "years": [2020, 2021],
+    "latest_label_season_read": 2021,
+    "history_rule": "season strictly before validation season",
+    "advance_gate": {
+      "minimum_full_gain_each_year": 25.0,
+      "minimum_R_gain_each_year": 25.0,
+      "full_pitcher_cluster_95_ci_low_each_year": 0.0,
+      "R_pitcher_cluster_95_ci_low_each_year": 0.0
+    },
+    "bootstrap_iterations": 2000,
+    "on_fail": "Close the hierarchical soft-label path without reading 2022+ candidate labels.",
+    "on_pass": "Freeze hard fraction and gamma, then run untouched 2022 and 2023 development validation."
+  },
+  "development_protocol_if_source_passes": {
+    "years": [2022, 2023],
+    "required_minimum_full_gain_against_exact_parent_and_both_honest_anchors": 132.11992465293324,
+    "required_pitcher_cluster_ci_lower_positive": true,
+    "lock_before_2024": true
+  },
+  "completion": {
+    "source_or_development_metrics_cannot_complete_goal": true,
+    "2024_must_remain_unread_until_recipe_lock": true,
+    "conservative_expected_lb_lower_must_exceed": 1190.0,
+    "actual_submission_is_manual": true
+  },
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json"
+}

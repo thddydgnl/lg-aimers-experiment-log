@@ -1,0 +1,121 @@
+{
+  "experiment_id": "V5_DUAL_STATE_PITCH_TRIAD_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_before_expanded_auto_2022_2023_training",
+  "hypothesis": "A deterministic same-season pitcher update, a row-independent expanded TrackMan auto-pitch joint model, and a current-state numeric model carry complementary control signals. A source-locked nonnegative probability mixture may remove the 2022 weakness of any single component while leaving the unstable F regime unchanged.",
+  "evidence_role_and_disclosure": {
+    "source_years": [2020, 2021],
+    "development_years": [2022, 2023],
+    "sealed_confirmation_year": 2024,
+    "source_search_is_retrospective_discovery": true,
+    "direct_update_and_current_numeric_2022_2023_metrics_were_previously_opened": true,
+    "expanded_auto_2022_2023_predictions_were_not_generated_or_read_before_this_lock": true,
+    "development_is_not_independent_confirmation": true,
+    "only_2024_can_supply_new_composite_confirmation": true
+  },
+  "source_search": {
+    "parent": "historical M3 reconstruction for 2020/2021",
+    "route": "candidate mixture on row-local game_type R; parent M3 unchanged on F",
+    "catalog": {
+      "exact_c": ["v4_m3_c_backtest_{year}_{year}.npz", "catboost_outcome"],
+      "direct_update": ["v5_direct_season_update_source_{year}.npz", "final_prediction"],
+      "expanded_auto": ["v5_expanded_auto_pitch_joint_source_{year}.npz", "expanded_auto_pitch_joint_raw"],
+      "current_numeric": ["v5_three_axis_source_{year}.npz", "current_state_numeric"],
+      "dense_physics": ["v5_dense_physics_pitchtype_moe_source_{year}.npz", "dense_physics_moe_raw"],
+      "dense_joint": ["v5_dense_pitch_joint_source_{year}.npz", "dense_pitch_joint_raw"],
+      "component_moe": ["v5_component_pattern_moe_source_{year}.npz", "component_pattern_moe_raw"],
+      "auto_joint": ["v5_auto_pitch_joint_source_{year}.npz", "auto_pitch_joint_raw"],
+      "tabm": ["v5_tabm_pitch_gated_source{year}_{year}.npz", "tabm_pitch_gated"]
+    },
+    "exactly_positive_components": 3,
+    "weight_step": 0.025,
+    "weights_sum_to_one": true,
+    "ranking": "maximize the minimum 2020/2021 R score gain versus historical M3; then mean R gain; then minimum routed-full gain; then lexicographic component/weight order",
+    "bootstrap_iterations": 2000,
+    "discovery_gate": {
+      "minimum_R_point_gain_each_year": 132.11992465293324,
+      "R_pitcher_cluster_95_ci_lower_positive_each_year": true,
+      "routed_full_pitcher_cluster_95_ci_lower_positive_each_year": true,
+      "semantic_and_alignment_checks_all_true": true
+    }
+  },
+  "locked_recipe": {
+    "name": "dual_state_pitch_triad",
+    "components": [
+      {
+        "name": "direct_update",
+        "weight": 0.55,
+        "definition": "deterministic current-season pitcher beta-binomial update with the previously locked k=500 recipe"
+      },
+      {
+        "name": "expanded_auto",
+        "weight": 0.25,
+        "definition": "raw success marginal from the locked expanded-auto-pitch joint CatBoost; no current pitch identity or current pitch TrackMan at inference"
+      },
+      {
+        "name": "current_numeric",
+        "weight": 0.2,
+        "definition": "locked current-state numeric CatBoost recipe"
+      }
+    ],
+    "formula": "0.55*direct_update + 0.25*expanded_auto + 0.20*current_numeric",
+    "route": "use the mixture only when row-local game_type == R; use honest M3 unchanged on F",
+    "clipping": [1e-06, 0.999999],
+    "post_lock_tuning_allowed": false
+  },
+  "source_point_audit": {
+    "R_gain": {
+      "2020": 170.26732455998058,
+      "2021": 143.41770915067275,
+      "minimum": 143.41770915067275
+    },
+    "routed_full_gain": {
+      "2020": 154.28827789580873,
+      "2021": 128.8768046145085,
+      "minimum": 128.8768046145085
+    },
+    "final_required_raw_gain": 132.11992465293324,
+    "source_routed_full_crosses_final_requirement": false,
+    "goal_completion_claimed": false
+  },
+  "expanded_auto_development_run": {
+    "stage": "v5_dual_state_pitch_triad_expanded_auto_dev2223",
+    "validation_seasons": [2022, 2023],
+    "models": ["catboost_auto_pitch_joint"],
+    "features": ["base", "e14", "platoon", "hand_matchup", "e14_hand_cells", "e14_count_cells", "e14_type_count_cells", "trackman_rich", "batter_e14", "batter_middle_e14", "pitchmix_e14", "expanded_auto_pitch_latent"],
+    "drop_features": ["pitcher_id"],
+    "params": "experiments/params/v5_auto_pitch_joint_catboost.json",
+    "outcome_scheme": "reverse_any",
+    "inner_validation": "none"
+  },
+  "development_gate": {
+    "parent": "v5_honest_m3_r_identity_{year}.npz final_prediction",
+    "same_fixed_recipe_in_2022_and_2023": true,
+    "minimum_R_point_gain_each_year": 0.0,
+    "R_pitcher_cluster_95_ci_lower_positive_each_year": true,
+    "routed_full_pitcher_cluster_95_ci_lower_positive_each_year": true,
+    "minimum_routed_full_point_gain_across_2022_2023": 132.11992465293324,
+    "on_fail": "close this family without reading or generating its 2024 composite metrics",
+    "on_pass": "freeze all package inputs and generate the untouched 2024 confirmation"
+  },
+  "confirmation_and_completion_gate": {
+    "preregistered_expected_lower_formula": "1090.9100565103 + 0.75*max(0, G_robust)",
+    "required_expected_lower_strictly_greater_than": 1190.0,
+    "required_G_robust_strictly_greater_than": 132.11992465293324,
+    "G_robust_must_include": ["2022 routed-full clustered CI lower", "2023 routed-full clustered CI lower", "2024 sealed routed-full clustered CI lower"],
+    "package_invariance_required": true,
+    "automatic_submission": false,
+    "actual_dacon_score_alternative": "user-reported actual DACON score strictly greater than 1190"
+  },
+  "data_contract": {
+    "official_train_and_trackman_only": true,
+    "test_rows_or_test_distribution_read_for_selection": false,
+    "external_data_or_api": false,
+    "future_labels_or_future_trackman": false,
+    "row_independent_inference": true,
+    "current_pitch_type_at_inference": false,
+    "current_pitch_trackman_at_inference": false,
+    "automatic_dacon_submission": false
+  },
+  "goal_completion_claimed": false
+}

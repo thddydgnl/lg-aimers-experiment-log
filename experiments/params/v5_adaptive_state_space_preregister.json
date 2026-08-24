@@ -1,0 +1,64 @@
+{
+  "experiment_id": "V5_ADAPTIVE_STATE_SPACE_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_before_2022_2023_source_metrics",
+  "hypothesis": "The fixed current-season shrinkage used by exact-C ignores persistent pitcher-to-pitcher differences in year-to-year volatility. A legal row-local state-space approximation can estimate each pitcher's process variance from completed, league-centered R seasons and adapt how quickly the current-season success count overrides the latest completed-season prior.",
+  "relationship_to_prior_work": {
+    "different_from_fixed_e14": "Uses pitcher-specific process variance and posterior uncertainty instead of one global K.",
+    "different_from_dynamic_state_catboost": "The state posterior is the prediction component itself; it is not a generic residual tree around fixed E14.",
+    "minimum_history": "At least two completed seasons are needed for individual process variance, so 2020/2021 are intentionally not applicable source folds."
+  },
+  "state_recipe": {
+    "completed_season_route": "R only",
+    "lifetime_counter_boundary": "last official train row before target season, all game types",
+    "season_effect": "pitcher R success rate minus same-season R league mean",
+    "minimum_pair_rows_for_global_process": 100,
+    "minimum_pair_rows_for_individual_process": 30,
+    "process_observation": "max((effect_s-effect_prev)^2 - p_s(1-p_s)/n_s - p_prev(1-p_prev)/n_prev, 0)",
+    "global_process_aggregation": "mean after upper winsorization at the fixed 0.90 quantile",
+    "individual_process_prior_dof": 3.0,
+    "individual_process_upper_clip_multiple": 10.0,
+    "latest_effect_shrinkage_k": 120.0,
+    "global_prior": "latest completed R season league mean",
+    "prior_probability_clip": [0.05, 0.95],
+    "adaptive_k_formula": "global_prior*(1-global_prior)/(latest sampling variance + shrunk process variance)",
+    "adaptive_k_clip": [20.0, 500.0],
+    "cold_start_k": 120.0,
+    "posterior": "(current-season successes + adaptive_k * pitcher prior)/(current-season pitches + adaptive_k)"
+  },
+  "source_protocol": {
+    "selection_years": [2022, 2023],
+    "unopened_confirmation_year": 2024,
+    "parent": "exact-C catboost_outcome",
+    "routing": "blend only R rows; F remains exact-C",
+    "blend_grid": [0.1, 0.25, 0.5, 0.75, 1.0],
+    "formula": "(1-gamma)*exact_C + gamma*adaptive_state_probability",
+    "ranking": "maximize minimum R gain, then minimum full gain, then mean R gain, then smaller gamma",
+    "bootstrap_iterations": 2000,
+    "gate": {
+      "minimum_R_gain_each_year": 50.0,
+      "minimum_full_gain_each_year": 0.0,
+      "R_pitcher_cluster_95_ci_lower_positive_each_year": true,
+      "full_pitcher_cluster_95_ci_lower_positive_each_year": true
+    },
+    "on_fail": "Close without reading 2024 labels for this recipe.",
+    "on_pass": "Write a recipe lock before opening 2024. No parameter or gamma changes are permitted afterward."
+  },
+  "complexity_contract": {
+    "outer_components": ["exact_C", "adaptive_state_probability"],
+    "component_count": 2,
+    "weights_nonnegative_sum_one": true,
+    "signed_residual_stack": false
+  },
+  "legality": {
+    "official_train_only": true,
+    "external_data_or_api": false,
+    "row_independent_test_inference": true,
+    "test_groupby_or_order": false,
+    "future_labels": false,
+    "same_target_calibration": false,
+    "test_rows_read": false,
+    "automatic_dacon_submission": false
+  },
+  "goal_completion_claimed": false
+}

@@ -1,0 +1,43 @@
+{
+  "experiment_id": "V5_RECENT_ROUTED_REGIME_CONFIRMATION_LOCK_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "locked_after_development_pass_before_any_candidate_2024_training_or_metric",
+  "immutable_inputs": {
+    "contract": {
+      "path": "experiments/params/v5_validation_contract_v3_regime_aware.json",
+      "sha256": "b9c0edaa545876cdb9438c9faaead5f7ecfd7fef0c62d2ad4eb5bd17ab67246e"
+    },
+    "regime_recipe": {
+      "path": "experiments/params/v5_recent_routed_regime_lock.json",
+      "sha256": "39ab65303b58456092cfcf100e168fa3573514c9768debb1ba13c4b38a88ea2b"
+    },
+    "development_gate": {
+      "path": "experiments/results/v5_recent_routed_regime_dev.json",
+      "sha256": "b734104c8f44b826a2fdbc62cdae9c863299b7a8fcb77e8791eed8efe3b1f369",
+      "required_status": "development_pass"
+    },
+    "development_artifacts": {
+      "2022": "c42938c202cbfe194866aa5080c1d2b8ab8b7843208a030d9ee57c3eebdff9ec",
+      "2023": "50504295c962a55961385bdb448cc1ba9505a677c6a02e002068ec72a08362b0"
+    }
+  },
+  "confirmation": {
+    "year": 2024,
+    "fine_stage": "v5_recent_routed_fine_confirm2024",
+    "auto_stage": "v5_recent_routed_auto_confirm2024",
+    "fresh_training": true,
+    "component_commands_equal_to_development_except_stage_and_validation_year": true,
+    "recipe_change_after_open": false,
+    "single_candidate_run": true,
+    "bootstrap_iterations": 2000,
+    "anchors": ["exact C", "v5_honest_m3_r_identity", "v5_honest_m3_r_grid"]
+  },
+  "locked_formula": {
+    "R": "0.6 * [exact_C + 0.5*(fine_raw-exact_C)] + 0.4 * [exact_C + 0.25*(auto_raw-exact_C)]",
+    "F": "(decoded previous-1-game successes + 100*exact_C)/(decoded_n+100)",
+    "route": "2024 R/F by row game_type",
+    "clipping": [0.000001, 0.999999]
+  },
+  "failure_rule": "No retuning or second 2024 recipe. If any contract gate fails, close the candidate.",
+  "goal_completion_claimed": false
+}

@@ -1,0 +1,57 @@
+{
+  "experiment_id": "V5_TRACKMAN_ID_STRUCTURE_V1",
+  "created_at_kst": "2026-08-22",
+  "status": "preregistered_before_source_metrics",
+  "hypothesis": "The official TrackMan player identifiers contain shared registration structure (length and decimal prefixes/suffixes) that is absent from the anonymous IDs. Coarse completed-history groups may transfer player cohort or role calibration beyond exact-C without importing external identity data.",
+  "data_contract": {
+    "official_train_and_trackman_only": true,
+    "external_identity_lookup": false,
+    "external_data_or_api": false,
+    "test_rows_read": false,
+    "source_validation_seasons": [2020, 2021],
+    "latest_control_label_season_used_for_metrics": 2021,
+    "mapping_cutoff": "TrackMan-linked rows with season strictly before validation season",
+    "current_or_validation_trackman_at_inference": false,
+    "deployment": "frozen anonymous-to-TrackMan ID map from completed official seasons",
+    "row_independent": true,
+    "automatic_dacon_submission": false
+  },
+  "candidate_groups": [
+    "pitcher_trackman_id_length",
+    "pitcher_trackman_id_prefix1",
+    "pitcher_trackman_id_prefix2",
+    "pitcher_trackman_id_suffix1",
+    "pitcher_trackman_id_suffix2",
+    "batter_trackman_id_length",
+    "batter_trackman_id_prefix1",
+    "batter_trackman_id_prefix2",
+    "batter_trackman_id_suffix1",
+    "batter_trackman_id_suffix2"
+  ],
+  "estimator": {
+    "history_rows": "R only, seasons strictly before validation season",
+    "row_signal": "control_success minus its source-season R mean",
+    "group_value": "sum of centered signal divided by group count plus k",
+    "unmapped_or_unseen_fallback": 0.0,
+    "apply": "add gamma times one group value to exact-C on R; preserve exact-C on F",
+    "probability_clip": [0.000001, 0.999999]
+  },
+  "source_grid": {
+    "shrinkage_k": [200, 1000, 5000],
+    "gammas": [0.05, 0.1, 0.2, 0.35, 0.5, 0.75, 1.0],
+    "selection_order": [
+      "maximum minimum full-score gain across 2020 and 2021",
+      "maximum minimum R-score gain",
+      "maximum mean full-score gain",
+      "larger k, smaller gamma, shorter group description"
+    ]
+  },
+  "source_gate": {
+    "minimum_full_gain_each_year": 25.0,
+    "minimum_r_gain_each_year": 25.0,
+    "pitcher_cluster_95_ci_lower_positive_each_year": true,
+    "on_fail": "close without adding ID features to exact-C or reading 2022+ metrics",
+    "on_pass": "freeze one mapped-ID feature recipe and retrain exact-C on 2022 and 2023"
+  },
+  "goal_contract": "experiments/params/v5_validation_contract_v2.json"
+}
